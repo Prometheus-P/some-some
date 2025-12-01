@@ -22,14 +22,21 @@ class TDS {
   static const Color danger = Color(0xFFF04452); // 에러/실패
 
   static const TextStyle titleBig = TextStyle(
-    fontSize: 28, fontWeight: FontWeight.bold, color: textWhite, letterSpacing: -0.5, height: 1.3
-  );
+      fontSize: 28,
+      fontWeight: FontWeight.bold,
+      color: textWhite,
+      letterSpacing: -0.5,
+      height: 1.3);
   static const TextStyle titleMedium = TextStyle(
-    fontSize: 22, fontWeight: FontWeight.bold, color: textWhite, letterSpacing: -0.5
-  );
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+      color: textWhite,
+      letterSpacing: -0.5);
   static const TextStyle body = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFB0B8C1), letterSpacing: -0.2
-  );
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      color: Color(0xFFB0B8C1),
+      letterSpacing: -0.2);
   
   // 쫀득한 애니메이션 커브
   static const Curve spring = Curves.elasticOut;
