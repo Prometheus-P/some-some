@@ -22,15 +22,25 @@ class TDS {
   static const Color danger = Color(0xFFF04452); // 에러/실패
 
   static const TextStyle titleBig = TextStyle(
-    fontSize: 28, fontWeight: FontWeight.bold, color: textWhite, letterSpacing: -0.5, height: 1.3
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    color: textWhite,
+    letterSpacing: -0.5,
+    height: 1.3,
   );
   static const TextStyle titleMedium = TextStyle(
-    fontSize: 22, fontWeight: FontWeight.bold, color: textWhite, letterSpacing: -0.5
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: textWhite,
+    letterSpacing: -0.5,
   );
   static const TextStyle body = TextStyle(
-    fontSize: 16, fontWeight: FontWeight.w500, color: Color(0xFFB0B8C1), letterSpacing: -0.2
+    fontSize: 16,
+    fontWeight: FontWeight.w500,
+    color: Color(0xFFB0B8C1),
+    letterSpacing: -0.2,
   );
-  
+
   // 쫀득한 애니메이션 커브
   static const Curve spring = Curves.elasticOut;
 }
@@ -69,13 +79,17 @@ class IntroScreen extends StatefulWidget {
   State<IntroScreen> createState() => _IntroScreenState();
 }
 
-class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStateMixin {
+class _IntroScreenState extends State<IntroScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -97,16 +111,19 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
               // Toss Style Header
               FadeInUp(
                 delay: 0,
-                child: Text("너랑 나랑\n손끝 시그널", style: TDS.titleBig.copyWith(fontSize: 34)),
+                child: Text(
+                  "너랑 나랑\n손끝 시그널",
+                  style: TDS.titleBig.copyWith(fontSize: 34),
+                ),
               ),
               const SizedBox(height: 12),
               FadeInUp(
                 delay: 200,
                 child: Text("진지함은 빼고,\n스킨십은 더하고!", style: TDS.body),
               ),
-              
+
               const Spacer(),
-              
+
               // Animated Graphic Area
               Center(
                 child: AnimatedBuilder(
@@ -116,17 +133,33 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                       alignment: Alignment.center,
                       children: [
                         Transform.translate(
-                          offset: Offset(sin(_controller.value * 2 * pi) * 20, 0),
+                          offset: Offset(
+                            sin(_controller.value * 2 * pi) * 20,
+                            0,
+                          ),
                           child: Container(
-                            width: 120, height: 120,
-                            decoration: BoxDecoration(color: TDS.primaryBlue.withOpacity(0.2), shape: BoxShape.circle, blurRadius: 20),
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: TDS.primaryBlue.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              blurRadius: 20,
+                            ),
                           ),
                         ),
                         Transform.translate(
-                          offset: Offset(-sin(_controller.value * 2 * pi) * 20, 0),
+                          offset: Offset(
+                            -sin(_controller.value * 2 * pi) * 20,
+                            0,
+                          ),
                           child: Container(
-                            width: 120, height: 120,
-                            decoration: BoxDecoration(color: TDS.kitschPink.withOpacity(0.2), shape: BoxShape.circle, blurRadius: 20),
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: TDS.kitschPink.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                              blurRadius: 20,
+                            ),
                           ),
                         ),
                         const Text("💕", style: TextStyle(fontSize: 80)),
@@ -135,7 +168,7 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                   },
                 ),
               ),
-              
+
               const Spacer(),
 
               // Toss Style Button
@@ -146,7 +179,10 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
                   color: TDS.primaryBlue,
                   onTap: () {
                     HapticFeedback.mediumImpact();
-                    Navigator.push(context, MaterialPageRoute(builder: (_) => const GameScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const GameScreen()),
+                    );
                   },
                 ),
               ),
@@ -154,7 +190,10 @@ class _IntroScreenState extends State<IntroScreen> with SingleTickerProviderStat
               FadeInUp(
                 delay: 500,
                 child: Center(
-                  child: Text("술자리 / 카페 / 썸 탈때 추천", style: TDS.body.copyWith(fontSize: 12)),
+                  child: Text(
+                    "술자리 / 카페 / 썸 탈때 추천",
+                    style: TDS.body.copyWith(fontSize: 12),
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -182,19 +221,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool isGameOver = false;
   bool isSuccess = false;
   double progress = 0.0; // 0.0 ~ 1.0 (100%)
-  
+
   // Touch Points
   final Map<int, Offset> _pointers = {};
-  
+
   // Targets (Bear & Rabbit)
   late Offset targetA; // Blue Bear
   late Offset targetB; // Pink Rabbit
-  
+
   // Physics & Animation
   late Ticker _ticker;
   double _time = 0.0;
   final double gameDuration = 15.0; // 15 seconds to win
-  
+
   // Game Constants
   final double targetRadius = 45.0;
   final double touchTolerance = 60.0;
@@ -203,7 +242,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     // 초기 타겟 위치 (화면 중앙 부근)
-    targetA = const Offset(100, 400); 
+    targetA = const Offset(100, 400);
     targetB = const Offset(300, 400);
 
     _ticker = createTicker(_gameLoop);
@@ -247,15 +286,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       Size size = MediaQuery.of(context).size;
       double centerX = size.width / 2;
       double centerY = size.height / 2;
-      
+
       double intensity = 1.0 + (progress * 2.0); // 난이도 증가
-      
+
       // Target A (Bear) 움직임
       targetA = Offset(
         centerX - 80 + sin(_time * 1.5) * 60 * intensity,
         centerY + cos(_time * 2.1) * 100 * intensity,
       );
-      
+
       // Target B (Rabbit) 움직임 (반대 위상으로 꼬이게 만듦)
       targetB = Offset(
         centerX + 80 + cos(_time * 1.8) * 60 * intensity,
@@ -273,11 +312,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
       // 둘 다 잡고 있지 않으면 실패
       if ((!touchingA || !touchingB) && _time > 0.5) {
-         // 시작 직후 0.5초는 봐줌
-         _finishGame(false);
+        // 시작 직후 0.5초는 봐줌
+        _finishGame(false);
       } else {
         // 잘 잡고 있으면 햅틱 피드백 (심장 박동)
-        if (_time % 1.0 < 0.05) { // 1초마다
+        if (_time % 1.0 < 0.05) {
+          // 1초마다
           HapticFeedback.lightImpact();
         }
       }
@@ -291,13 +331,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       isGameOver = !success;
       isSuccess = success;
     });
-    
+
     if (success) {
       HapticFeedback.vibrate();
     } else {
       // 실패 시 2번 퉁퉁
       HapticFeedback.heavyImpact();
-      Future.delayed(const Duration(milliseconds: 200), () => HapticFeedback.heavyImpact());
+      Future.delayed(
+        const Duration(milliseconds: 200),
+        () => HapticFeedback.heavyImpact(),
+      );
     }
   }
 
@@ -311,8 +354,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             child: Listener(
               onPointerDown: (e) {
                 setState(() => _pointers[e.pointer] = e.localPosition);
-                if (!isPlaying && !isGameOver && !isSuccess && _pointers.length >= 2) {
-                   _startGame();
+                if (!isPlaying &&
+                    !isGameOver &&
+                    !isSuccess &&
+                    _pointers.length >= 2) {
+                  _startGame();
                 }
               },
               onPointerMove: (e) {
@@ -341,7 +387,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
           // 2. UI Layer (Top Status)
           Positioned(
-            top: 60, left: 0, right: 0,
+            top: 60,
+            left: 0,
+            right: 0,
             child: Column(
               children: [
                 if (!isPlaying && !isGameOver && !isSuccess)
@@ -350,12 +398,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       children: [
                         const Text("🐻", style: TextStyle(fontSize: 40)),
                         const SizedBox(height: 10),
-                        Text("각자 캐릭터를\n꾹 눌러주세요", textAlign: TextAlign.center, style: TDS.titleMedium.copyWith(color: TDS.kitschYellow)),
+                        Text(
+                          "각자 캐릭터를\n꾹 눌러주세요",
+                          textAlign: TextAlign.center,
+                          style: TDS.titleMedium.copyWith(
+                            color: TDS.kitschYellow,
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 if (isPlaying)
-                  Text("${(progress * 100).toInt()}%", style: TDS.titleBig.copyWith(fontSize: 40, color: TDS.textWhite.withOpacity(0.5))),
+                  Text(
+                    "${(progress * 100).toInt()}%",
+                    style: TDS.titleBig.copyWith(
+                      fontSize: 40,
+                      color: TDS.textWhite.withOpacity(0.5),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -379,7 +439,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               const Text("😱", style: TextStyle(fontSize: 80)),
               Text("띠로리~", style: TDS.titleBig.copyWith(color: TDS.danger)),
               const SizedBox(height: 10),
-              const Text("손을 놓쳐버렸어요!\n(벌칙: 서로 10초간 눈맞춤)", textAlign: TextAlign.center, style: TDS.body),
+              const Text(
+                "손을 놓쳐버렸어요!\n(벌칙: 서로 10초간 눈맞춤)",
+                textAlign: TextAlign.center,
+                style: TDS.body,
+              ),
               const SizedBox(height: 30),
               TossButton(
                 text: "다시 도전",
@@ -390,7 +454,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     _pointers.clear();
                   });
                 },
-              )
+              ),
             ],
           ),
         ),
@@ -407,9 +471,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text("🎉", style: TextStyle(fontSize: 80)),
-              Text("천생연분!", style: TDS.titleBig.copyWith(color: TDS.kitschPink)),
+              Text(
+                "천생연분!",
+                style: TDS.titleBig.copyWith(color: TDS.kitschPink),
+              ),
               const SizedBox(height: 10),
-              const Text("이 정도면 사귀어야 하는 거 아님?", textAlign: TextAlign.center, style: TDS.body),
+              const Text(
+                "이 정도면 사귀어야 하는 거 아님?",
+                textAlign: TextAlign.center,
+                style: TDS.body,
+              ),
               const SizedBox(height: 30),
               TossButton(
                 text: "다음 단계로",
@@ -420,7 +491,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     _pointers.clear();
                   });
                 },
-              )
+              ),
             ],
           ),
         ),
@@ -456,7 +527,7 @@ class GamePainter extends CustomPainter {
     if (pointers.length >= 2) {
       final p1 = pointers.values.first;
       final p2 = pointers.values.last;
-      
+
       // Glow Effect
       paint.color = TDS.kitschPink.withOpacity(0.3);
       paint.strokeWidth = 10;
@@ -467,18 +538,25 @@ class GamePainter extends CustomPainter {
       paint.color = TDS.kitschPink;
       paint.strokeWidth = 3;
       canvas.drawLine(p1, p2, paint);
-      
+
       // Distance Text
       final dist = (p1 - p2).distance;
       if (dist < 100) {
-        _drawText(canvas, "어머! 닿겠어!", (p1 + p2) / 2 + const Offset(0, -40), TDS.kitschYellow, 14, true);
+        _drawText(
+          canvas,
+          "어머! 닿겠어!",
+          (p1 + p2) / 2 + const Offset(0, -40),
+          TDS.kitschYellow,
+          14,
+          true,
+        );
       }
     }
 
     // 2. Draw Targets (Bear & Rabbit)
     _drawCharacter(canvas, targetA, "🐻", TDS.primaryBlue);
     _drawCharacter(canvas, targetB, "🐰", TDS.kitschPink);
-    
+
     // 3. Draw User Touches (Visual Feedback)
     pointers.forEach((id, pos) {
       paint.color = Colors.white.withOpacity(0.5);
@@ -488,9 +566,14 @@ class GamePainter extends CustomPainter {
     });
   }
 
-  void _drawCharacter(Canvas canvas, Offset pos, String emoji, Color glowColor) {
+  void _drawCharacter(
+    Canvas canvas,
+    Offset pos,
+    String emoji,
+    Color glowColor,
+  ) {
     final paint = Paint();
-    
+
     // Glow
     paint.color = glowColor.withOpacity(0.4);
     paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
@@ -504,20 +587,47 @@ class GamePainter extends CustomPainter {
     canvas.drawCircle(pos, 35, paint);
 
     // Emoji
-    final textSpan = TextSpan(text: emoji, style: const TextStyle(fontSize: 40));
-    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    final textSpan = TextSpan(
+      text: emoji,
+      style: const TextStyle(fontSize: 40),
+    );
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
     textPainter.layout();
-    textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
+    textPainter.paint(
+      canvas,
+      pos - Offset(textPainter.width / 2, textPainter.height / 2),
+    );
   }
 
-  void _drawText(Canvas canvas, String text, Offset pos, Color color, double fontSize, bool bold) {
+  void _drawText(
+    Canvas canvas,
+    String text,
+    Offset pos,
+    Color color,
+    double fontSize,
+    bool bold,
+  ) {
     final textSpan = TextSpan(
-      text: text, 
-      style: TextStyle(color: color, fontSize: fontSize, fontWeight: bold ? FontWeight.bold : FontWeight.normal, fontFamily: 'Pretendard')
+      text: text,
+      style: TextStyle(
+        color: color,
+        fontSize: fontSize,
+        fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+        fontFamily: 'Pretendard',
+      ),
     );
-    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+    );
     textPainter.layout();
-    textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
+    textPainter.paint(
+      canvas,
+      pos - Offset(textPainter.width / 2, textPainter.height / 2),
+    );
   }
 
   @override
@@ -532,7 +642,12 @@ class TossButton extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
-  const TossButton({super.key, required this.text, required this.color, required this.onTap});
+  const TossButton({
+    super.key,
+    required this.text,
+    required this.color,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -546,7 +661,14 @@ class TossButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(16), // Toss Corner Radius
         ),
         alignment: Alignment.center,
-        child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -562,7 +684,8 @@ class FadeInUp extends StatefulWidget {
   State<FadeInUp> createState() => _FadeInUpState();
 }
 
-class _FadeInUpState extends State<FadeInUp> with SingleTickerProviderStateMixin {
+class _FadeInUpState extends State<FadeInUp>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<Offset> _translate;
@@ -570,9 +693,18 @@ class _FadeInUpState extends State<FadeInUp> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _opacity = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
-    _translate = Tween<Offset>(begin: const Offset(0, 20), end: Offset.zero).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+    _opacity = Tween<double>(
+      begin: 0,
+      end: 1,
+    ).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
+    _translate = Tween<Offset>(
+      begin: const Offset(0, 20),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _controller.forward();
@@ -596,4 +728,3 @@ class _FadeInUpState extends State<FadeInUp> with SingleTickerProviderStateMixin
     );
   }
 }
-

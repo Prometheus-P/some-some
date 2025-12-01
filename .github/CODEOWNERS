@@ -1,0 +1,150 @@
+# CODEOWNERS
+#
+# 이 파일은 코드 소유권을 정의하고 PR 시 자동으로 리뷰어를 할당합니다.
+# 패턴 매칭은 .gitignore와 동일한 방식을 사용합니다.
+# 마지막으로 매칭된 패턴이 우선순위를 가집니다.
+#
+# 문법:
+# pattern @username @username
+# pattern @org/team-name
+#
+# 자세한 내용: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# ============================================================================
+# Default owners for everything in the repo
+# ============================================================================
+# 모든 파일에 대한 기본 소유자
+# 아래 더 구체적인 규칙이 없는 경우 이 소유자가 리뷰 요청을 받습니다
+* @Prometheus-P
+
+# ============================================================================
+# Documentation
+# ============================================================================
+# 프로젝트 문서 - Technical Writer, Product Manager, Lead Developer
+*.md @Prometheus-P
+/docs/ @Prometheus-P
+/docs/specs/ @Prometheus-P
+CONTEXT.md @Prometheus-P
+PRD.md @Prometheus-P
+plan.md @Prometheus-P
+CONTRIBUTING.md @Prometheus-P
+CODE_REVIEW_GUIDE.md @Prometheus-P
+
+# ============================================================================
+# Core Application Code
+# ============================================================================
+# Flutter 앱 코드 - Lead Developer, Mobile Team
+/lib/ @Prometheus-P
+main.dart @Prometheus-P
+
+# Domain Layer (Phase 2+) - Lead Developer, Backend Team
+/lib/domain/ @Prometheus-P
+
+# Data Layer (Phase 2+) - Backend Developer, Mobile Team
+/lib/data/ @Prometheus-P
+
+# Presentation Layer - Frontend Developer, UI/UX Designer
+/lib/presentation/ @Prometheus-P
+
+# ============================================================================
+# Testing
+# ============================================================================
+# 테스트 코드 - QA Team, Lead Developer
+/test/ @Prometheus-P
+/test/unit/ @Prometheus-P
+/test/widget/ @Prometheus-P
+/test/integration/ @Prometheus-P
+
+# ============================================================================
+# Configuration & Build
+# ============================================================================
+# Flutter 프로젝트 설정 - Lead Developer
+pubspec.yaml @Prometheus-P
+pubspec.lock @Prometheus-P
+analysis_options.yaml @Prometheus-P
+
+# Android 빌드 설정 - Android Developer, DevOps
+/android/ @Prometheus-P
+/android/app/build.gradle @Prometheus-P
+/android/build.gradle @Prometheus-P
+
+# iOS 빌드 설정 - iOS Developer, DevOps
+/ios/ @Prometheus-P
+/ios/Runner.xcodeproj/ @Prometheus-P
+/ios/Podfile @Prometheus-P
+
+# ============================================================================
+# Environment & Secrets
+# ============================================================================
+# 환경 변수 템플릿 - DevOps, Security Team
+.env.example @Prometheus-P
+
+# Firebase 설정 (Phase 2+) - Backend Developer, DevOps
+# 주의: 실제 설정 파일은 .gitignore에 포함되어 있습니다
+# google-services.json와 GoogleService-Info.plist는 버전 관리되지 않습니다
+
+# ============================================================================
+# CI/CD & GitHub
+# ============================================================================
+# GitHub Actions Workflows - DevOps, Lead Developer
+/.github/workflows/ @Prometheus-P
+/.github/workflows/ci.yml @Prometheus-P
+/.github/workflows/deploy-dev.yml @Prometheus-P
+
+# GitHub 설정 - Lead Developer, DevOps
+/.github/ @Prometheus-P
+/.github/ISSUE_TEMPLATE/ @Prometheus-P
+/.github/PULL_REQUEST_TEMPLATE.md @Prometheus-P
+/.github/CODEOWNERS @Prometheus-P
+
+# Security Policy - Security Team, Lead Developer
+/.github/SECURITY.md @Prometheus-P
+
+# ============================================================================
+# Assets & Resources
+# ============================================================================
+# 이미지, 폰트, 기타 에셋 - UI/UX Designer, Frontend Developer
+/assets/ @Prometheus-P
+/assets/images/ @Prometheus-P
+/assets/fonts/ @Prometheus-P
+
+# ============================================================================
+# Git Configuration
+# ============================================================================
+# Git 설정 - Lead Developer, DevOps
+.gitignore @Prometheus-P
+.gitattributes @Prometheus-P
+
+# ============================================================================
+# 사용 예시 (팀이 확장되면 아래 패턴을 사용)
+# ============================================================================
+#
+# 팀 단위 소유권:
+# /lib/presentation/game/ @Prometheus-P/game-team
+# /lib/presentation/soul_sync/ @Prometheus-P/matching-team
+# /lib/data/repositories/ @Prometheus-P/backend-team
+#
+# 특정 기능 모듈:
+# /lib/presentation/game/widgets/ @ui-developer @game-lead
+# /lib/domain/usecases/ @backend-developer @architect
+# /lib/data/datasources/remote/ @backend-developer @devops
+# /lib/data/datasources/local/ @mobile-developer
+#
+# 중요한 파일에 대한 다중 리뷰:
+# CONTEXT.md @lead-developer @product-manager @tech-writer
+# /lib/domain/ @lead-developer @backend-developer
+# /android/app/build.gradle @android-developer @devops @lead-developer
+#
+# 보안 관련 파일:
+# /lib/data/datasources/secure_storage* @security-team @lead-developer
+# /lib/domain/entities/user* @security-team @backend-developer
+
+# ============================================================================
+# 주의사항
+# ============================================================================
+# 1. CODEOWNERS 파일을 수정하면 해당 파일의 소유자가 리뷰해야 합니다
+# 2. 여러 패턴이 매칭되면 가장 마지막 패턴이 우선됩니다
+# 3. @username은 실제 GitHub username으로 대체해야 합니다
+# 4. @org/team-name 형식으로 팀 전체를 지정할 수 있습니다
+# 5. 팀원이 추가되면 이 파일을 업데이트해야 합니다
+# 6. Branch protection rule과 함께 사용하면 효과적입니다

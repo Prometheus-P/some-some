@@ -1,0 +1,26 @@
+{
+  // ============================================================================
+  // 썸썸 (Thumb Some) - 권장 VS Code 확장 프로그램
+  // ============================================================================
+
+  "recommendations": [
+    // Dart & Flutter
+    "dart-code.dart-code",
+    "dart-code.flutter",
+
+    // Git
+    "eamodio.gitlens",
+
+    // 코드 품질
+    "usernamehw.errorlens",
+
+    // 유틸리티
+    "christian-kohler.path-intellisense",
+    "formulahendry.auto-rename-tag",
+
+    // 테마 (선택사항)
+    "pkief.material-icon-theme"
+  ],
+
+  "unwantedRecommendations": []
+}

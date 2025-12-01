@@ -1,0 +1,38 @@
+name: thumb_some
+description: "썸썸 - 게임인 척하며 자연스럽게 손잡기"
+publish_to: 'none' # 퍼블리싱 하지 않음
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # MVP uses Material Design only
+  # cupertino_icons will be added in Phase 2+ if needed
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # 코드 품질 도구
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Assets 설정 (Phase 2+)
+  # assets:
+  #   - assets/images/
+  #   - assets/fonts/
+
+  # 폰트 설정 (Phase 2+)
+  # fonts:
+  #   - family: Pretendard
+  #     fonts:
+  #       - asset: assets/fonts/Pretendard-Regular.ttf
+  #       - asset: assets/fonts/Pretendard-Bold.ttf
+  #         weight: 700
