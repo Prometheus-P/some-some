@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Pre-commit hook for 썸썸 (Thumb Some)
+# Automatically formats Dart code using dart format before committing
+#
+# This ensures all commits comply with Dart style guide and pass CI formatting checks.
+
+echo "🎨 Running dart format..."
+
+# Check if dart is available
+if ! command -v dart &> /dev/null; then
+    echo "⚠️  Warning: dart command not found. Skipping formatting."
+    echo "   Install Dart SDK to enable automatic formatting."
+    exit 0
+fi
+
+# Run dart format on all Dart files
+dart format .
+
+# Check if there were any changes
+if [[ -n $(git diff --name-only) ]]; then
+    echo "✅ Code formatted successfully"
+
+    # Stage the formatted files
+    git add -u
+
+    echo "📝 Formatted files have been staged"
+else
+    echo "✨ Code already properly formatted"
+fi
+
+exit 0

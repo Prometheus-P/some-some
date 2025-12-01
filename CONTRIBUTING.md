@@ -141,9 +141,17 @@ git remote add upstream https://github.com/Prometheus-P/some-some.git
 # 4. 의존성 설치
 flutter pub get
 
-# 5. 앱 실행하여 동작 확인
+# 5. Git hooks 설치 (자동 코드 포맷팅)
+./scripts/setup-hooks.sh
+
+# 6. 앱 실행하여 동작 확인
 flutter run
 ```
+
+**Git Hooks 정보**:
+- Pre-commit hook이 자동으로 `dart format` 실행
+- 모든 커밋이 자동으로 포맷팅되어 CI 통과 보장
+- 자세한 내용: `.git/hooks/README.md` 참조
 
 ### 3.3 개발 환경 검증
 
