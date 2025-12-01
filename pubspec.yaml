@@ -11,8 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # Cupertino Icons (iOS style icons)
-  cupertino_icons: ^1.0.6
+  # MVP uses Material Design only
+  # cupertino_icons will be added in Phase 2+ if needed
 
 dev_dependencies:
   flutter_test:
