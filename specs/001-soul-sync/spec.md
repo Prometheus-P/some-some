@@ -5,6 +5,16 @@
 **Status**: Draft → **Revised**
 **Input**: User description: "이심전심 텔레파시 (Soul Sync) mode"
 
+## Clarifications
+
+### Session 2025-12-02
+
+- Q: 디자인 시스템 통합 전략 (TDS vs M3)? → A: Full M3 전환 - TDS를 Material Design 3로 완전 대체, Constitution 수정 필요
+- Q: M3 색상 테마 접근 방식? → A: 커스텀 M3 테마 - kitschPink (#FF007F)를 seed color로 M3 tonal palette 생성
+- Q: M3 모션 시스템 적용 범위? → A: 하이브리드 모션 - 일반 UI는 M3 easing (emphasized, standard), 게임 피드백(탭, 결과)은 elasticOut 유지
+- Q: M3 컴포넌트 구현 방식? → A: 하이브리드 컴포넌트 - 일반 UI는 Flutter M3 위젯, 게임 UI (O/X 버튼, 결과 카드)는 커스텀 구현
+- Q: 테마 모드 지원? → A: 다크 모드 전용 - M3 dark color scheme만 정의, 라이트 모드 미지원
+
 ## User Scenarios & Testing
 
 ### User Story 1 - 기본 궁합 테스트 플레이 (Priority: P1)
@@ -34,9 +44,9 @@
 
 **Acceptance Scenarios**:
 
-1. **Given** 결과 화면, **When** 일치율 80% 이상 (4-5개 일치), **Then** "천생연분!" 멘트 + 🎉 이모지 + `HapticFeedback.vibrate()` + kitschPink 색상 강조
-2. **Given** 결과 화면, **When** 일치율 50-79% (3개 일치), **Then** "꽤 맞네?" 멘트 + 😊 이모지 + `HapticFeedback.mediumImpact()` + kitschYellow 색상
-3. **Given** 결과 화면, **When** 일치율 50% 미만 (0-2개 일치), **Then** "이건 좀..." 멘트 + 😅 이모지 + `HapticFeedback.lightImpact()` + textGrey 색상 (긍정적 톤 유지)
+1. **Given** 결과 화면, **When** 일치율 80% 이상 (4-5개 일치), **Then** "천생연분!" 멘트 + 🎉 이모지 + `HapticFeedback.vibrate()` + M3 primary 색상 강조
+2. **Given** 결과 화면, **When** 일치율 50-79% (3개 일치), **Then** "꽤 맞네?" 멘트 + 😊 이모지 + `HapticFeedback.mediumImpact()` + M3 tertiary 색상
+3. **Given** 결과 화면, **When** 일치율 50% 미만 (0-2개 일치), **Then** "이건 좀..." 멘트 + 😅 이모지 + `HapticFeedback.lightImpact()` + M3 onSurfaceVariant 색상 (긍정적 톤 유지)
 4. **Given** 결과 화면, **When** "다시하기" 버튼 탭, **Then** 질문 풀에서 새로 셔플된 5개 질문으로 게임 재시작 (이전 세션 질문과 중복 가능)
 5. **Given** 결과 화면, **When** "홈으로" 버튼 탭, **Then** IntroScreen으로 이동
 
@@ -83,15 +93,32 @@
 - **LR-001**: 분할 비율: 상단 50% / 하단 50% (Expanded 1:1)
 - **LR-002**: O/X 버튼 크기: 80x80 논리 픽셀 (원형), 최소 터치 영역 충족
 - **LR-003**: O/X 버튼 간격: 40 논리 픽셀
-- **LR-004**: 질문 텍스트: TDS.titleMedium (fontSize 18), 중앙 정렬
-- **LR-005**: 영역 구분선: 높이 2px, TDS.textGrey 색상 (opacity 0.3)
+- **LR-004**: 질문 텍스트: M3 titleMedium (fontSize 18), 중앙 정렬
+- **LR-005**: 영역 구분선: 높이 2px, M3 outlineVariant 색상
+
+### Design System Requirements (M3 Migration)
+
+- **DS-001**: Material Design 3 전면 적용 - TDS 완전 대체 (Constitution Principle III 수정 필요)
+- **DS-002**: 색상 테마: kitschPink (#FF007F) seed color 기반 M3 tonal palette 생성
+  - Primary: kitschPink 계열
+  - Secondary/Tertiary: M3 알고리즘 자동 생성
+  - Surface: M3 dark surface tokens
+- **DS-003**: 모션 시스템 (하이브리드)
+  - 일반 UI 전환: M3 easing (emphasizedDecelerate, standard)
+  - 게임 피드백: Curves.elasticOut 유지 ("쫀득한" 느낌)
+  - Duration tokens: M3 medium (300ms), short (150ms)
+- **DS-004**: 컴포넌트 구현 (하이브리드)
+  - 일반 UI: Flutter M3 위젯 (`FilledButton`, `Card`, `NavigationBar`)
+  - 게임 UI: 커스텀 구현 (O/X 버튼, 결과 카드, PlayerArea)
+- **DS-005**: 테마 모드: 다크 모드 전용 (`ColorScheme.fromSeed` with `Brightness.dark`)
+- **DS-006**: Typography: M3 type scale 적용 (`TextTheme` from M3), 한글 최적화 폰트 유지
 
 ### Accessibility Requirements
 
 - **AR-001**: O/X 버튼 터치 영역: 80x80 논리 픽셀 (iOS HIG 44pt 최소 기준 충족)
-- **AR-002**: 질문 텍스트 색상 대비: TDS.textWhite (#FFFFFF) on TDS.background (#17171C) = 대비율 약 15:1 (WCAG AAA 충족)
-- **AR-003**: O 버튼 색상 대비: TDS.primaryBlue (#0064FF) on TDS.background = 대비율 약 4.5:1 (WCAG AA 충족)
-- **AR-004**: X 버튼 색상 대비: TDS.kitschPink (#FF007F) on TDS.background = 대비율 약 4.6:1 (WCAG AA 충족)
+- **AR-002**: 질문 텍스트 색상 대비: M3 onSurface on M3 surface = WCAG AAA 충족 (M3 자동 보장)
+- **AR-003**: O 버튼 색상 대비: M3 primary on M3 surface = WCAG AA 충족 (M3 자동 보장)
+- **AR-004**: X 버튼 색상 대비: M3 tertiary on M3 surface = WCAG AA 충족 (M3 자동 보장)
 - **AR-005**: 180도 회전된 영역에서도 텍스트 가독성 동일 (Transform.rotate로 전체 위젯 회전, 폰트 렌더링 영향 없음)
 - **AR-006**: 스크린 리더 지원: MVP에서는 미지원 (향후 시맨틱 라벨 추가 예정)
 

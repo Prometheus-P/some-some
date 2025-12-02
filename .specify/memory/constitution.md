@@ -1,21 +1,25 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 0.0.0 → 1.0.0 (Initial ratification)
-Modified principles: N/A (new constitution)
-Added sections:
-  - Core Principles (5 principles)
-  - UX & Brand Constraints
-  - Development Workflow
-  - Governance
-Removed sections: N/A
+Version change: 1.0.0 → 2.0.0 (MAJOR - Principle III redefinition)
+Modified principles:
+  - III. Design System Compliance (TDS) → III. Design System Compliance (M3)
+Added sections: None
+Removed sections: None
 Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ (compatible - constitution gates generic)
-  - .specify/templates/spec-template.md ✅ (compatible - user story structure intact)
-  - .specify/templates/tasks-template.md ✅ (compatible - task phases align)
-  - .specify/templates/checklist-template.md ✅ (compatible - no conflicts)
-  - .specify/templates/agent-file-template.md ✅ (compatible - no conflicts)
-Follow-up TODOs: None
+  - .specify/templates/plan-template.md ✅ (no TDS references - compatible)
+  - .specify/templates/spec-template.md ✅ (no TDS references - compatible)
+  - .specify/templates/tasks-template.md ✅ (no TDS references - compatible)
+  - .specify/templates/checklist-template.md ✅ (no TDS references - compatible)
+  - .specify/templates/agent-file-template.md ✅ (no TDS references - compatible)
+Files requiring manual follow-up (contain TDS references):
+  - lib/main.dart ⚠ (implementation code - requires M3 migration task)
+  - Claude.md ⚠ (runtime guidance - update TDS section to M3)
+  - specs/001-soul-sync/plan.md ⚠ (feature plan - update design system references)
+  - README.md ⚠ (documentation - update design system description)
+Follow-up TODOs:
+  - Create M3 migration implementation task for lib/main.dart
+  - Update CLAUDE.md design system section
 -->
 
 # 썸썸 (Thumb Some) Constitution
@@ -46,20 +50,39 @@ The game MUST maintain 60fps minimum (120fps on ProMotion displays). This is not
 
 **Rationale:** Frame drops destroy the tactile illusion. Users will feel the difference even if they can't articulate it.
 
-### III. Design System Compliance (TDS)
+### III. Design System Compliance (M3)
 
-All UI MUST follow the Toss Design System (TDS) with kitsch accents. Deviating from the color palette requires explicit approval.
+All UI MUST follow Material Design 3 with a custom theme derived from the kitschPink seed color. This replaces the previous TDS (Toss Design System) approach.
 
-**Color Palette (immutable):**
-- `background: #17171C` (Dark mode base)
-- `primaryBlue: #0064FF` (Toss brand color)
-- `kitschPink: #FF007F` (Game accent)
-- `kitschYellow: #FFD700` (Secondary accent)
+**Color System (M3 Tonal Palette):**
+- Seed color: `kitschPink (#FF007F)` generates full M3 tonal palette
+- Primary: kitschPink-derived tones (primary, onPrimary, primaryContainer, etc.)
+- Secondary/Tertiary: M3 algorithm auto-generated from seed
+- Surface: M3 dark surface tokens (`surface`, `surfaceVariant`, `onSurface`)
+- Theme mode: Dark only (`Brightness.dark`)
 
-**Typography:** `-0.5` letter spacing always
-**Motion:** `Curves.elasticOut` for spring animations
+**Typography:** M3 type scale via `TextTheme`, Korean-optimized font
 
-**Rationale:** Visual consistency builds trust. The kitsch overlay signals "this is playful" without undermining the solid UX foundation.
+**Motion (Hybrid):**
+- General UI: M3 easing curves (`Easing.emphasizedDecelerate`, `Easing.standard`)
+- Game feedback: `Curves.elasticOut` retained for "쫀득한" feel
+
+**Components (Hybrid):**
+- Standard UI: Flutter M3 widgets (`FilledButton`, `Card`, `NavigationBar`)
+- Game UI: Custom implementation (O/X buttons, result cards, PlayerArea)
+
+**Implementation:**
+```dart
+ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Color(0xFFFF007F), // kitschPink
+    brightness: Brightness.dark,
+  ),
+)
+```
+
+**Rationale:** M3 provides systematic color generation, accessibility compliance (WCAG contrast ratios), and modern Flutter integration while preserving brand identity through the kitschPink seed.
 
 ### IV. Physics Stability
 
@@ -111,7 +134,7 @@ The B-grade, kitsch aesthetic is a feature, not a bug. All user-facing copy MUST
 ## Development Workflow
 
 **Git & Commits:**
-- Branch naming: `claude/feature-name-{sessionId}`
+- Branch naming: `claude/feature-name-{sessionId}` or `NNN-feature-name`
 - Commit messages: `feat:`, `fix:`, `refactor:` prefixes
 - MUST commit only working (playable) code
 - MUST NOT commit code that hasn't been verified on device for haptic/multi-touch features
@@ -153,4 +176,4 @@ This constitution supersedes all other development practices for this project. A
 - Violations MUST be explicitly justified in the Complexity Tracking table
 - Runtime guidance in `CLAUDE.md` remains the primary development reference
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-02 | **Last Amended**: 2025-12-02
+**Version**: 2.0.0 | **Ratified**: 2025-12-02 | **Last Amended**: 2025-12-02

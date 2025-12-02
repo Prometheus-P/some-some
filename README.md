@@ -17,25 +17,29 @@
 
 ## Design Concept
 
-### Toss Design System (TDS) + Kitsch
+### Material Design 3 (M3) + Kitsch
 
-**Base:** 토스 앱의 신뢰감 있는 UX (직관성, 가독성, 부드러운 모션)
+**Base:** Material Design 3의 체계적인 색상 생성과 접근성 준수
 
-**Accent:** 네온 핑크 `#FF007F` & 옐로우 `#FFD700` 로 "이건 노는 거야!" 분위기 형성
+**Seed Color:** 네온 핑크 `#FF007F` (kitschPink)를 시드로 M3 tonal palette 자동 생성
 
 ```
-┌──────────────────────────────────────┐
-│  TDS.background   #17171C (다크 모드)  │
-│  TDS.primaryBlue  #0064FF (토스 블루)  │
-│  TDS.kitschPink   #FF007F (썸썸 핑크)  │
-│  TDS.kitschYellow #FFD700 (썸썸 옐로우) │
-└──────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│  M3 Color System (Seed: kitschPink #FF007F)      │
+│  ─────────────────────────────────────────────── │
+│  Primary:    kitschPink 기반 tonal palette       │
+│  Secondary:  M3 알고리즘 자동 생성                │
+│  Surface:    M3 dark surface tokens              │
+│  Theme:      Dark mode only (Brightness.dark)    │
+└──────────────────────────────────────────────────┘
 ```
 
 ### Tone & Manner
 - **텍스트:** "띠로리~", "천생연분!", "어머! 닿겠어!" 등 밈(Meme) 활용
 - **사운드:** 상황에 딱 맞는 효과음 위주
-- **모션:** `SpringCurve`를 사용한 쫀득한 인터랙션
+- **모션 (하이브리드):**
+  - 일반 UI: M3 easing (`Easing.emphasizedDecelerate`)
+  - 게임 피드백: `Curves.elasticOut` (쫀득한 느낌)
 
 ---
 
@@ -64,9 +68,20 @@
 - ✅ 성공: `HapticFeedback.vibrate()` + 폭죽 애니메이션 + "천생연분!"
 - ❌ 실패: `HapticFeedback.heavyImpact()` + "띠로리~" + 벌칙 안내
 
-### Mode B: 이심전심 텔레파시 (Soul Sync) - *Coming Soon*
+### Mode B: 이심전심 텔레파시 (Soul Sync) ✅
 
-화면이 상하로 반전되어 분할, 질문에 O/X로 답하며 궁합 테스트
+두 사람이 마주보고 각자 영역에서 같은 질문에 O/X로 답하며 궁합 테스트
+
+**Game Logic:**
+1. 화면이 50:50으로 상하 분할, 상단 영역은 180° 회전 (대면 플레이용)
+2. 10개 질문 풀에서 5개 랜덤 선택
+3. 양쪽 모두 답변 시 자동으로 다음 질문 전환
+4. 결과에 따라 3단계 멘트: "천생연분!" (≥80%) / "꽤 맞네?" (50-79%) / "이건 좀..." (<50%)
+
+**Feedback:**
+- ✅ 80%+ : `HapticFeedback.vibrate()` + 🎉 + M3 primary 색상
+- 😊 50-79%: `HapticFeedback.mediumImpact()` + M3 tertiary 색상
+- 😅 <50%: `HapticFeedback.lightImpact()` + M3 onSurfaceVariant 색상
 
 ### Mode C: 복불복 룰렛 (Penalty) - *Coming Soon*
 
@@ -111,13 +126,15 @@ flutter run
 
 ```
 thumb-some/
-├── main.dart          # 전체 앱 코드 (Single File MVP)
-│   ├── TDS            # Design System 상수
-│   ├── IntroScreen    # 메인 로비
-│   ├── GameScreen     # 쫀드기 챌린지 게임
-│   ├── GamePainter    # CustomPainter 그래픽
-│   ├── TossButton     # 토스 스타일 버튼
-│   └── FadeInUp       # 진입 애니메이션
+├── lib/
+│   └── main.dart          # 전체 앱 코드 (Single File Architecture)
+│       ├── ThemeData      # M3 ColorScheme.fromSeed()
+│       ├── IntroScreen    # 메인 로비
+│       ├── GameScreen     # 쫀드기 챌린지 게임
+│       ├── SoulSyncScreen # 이심전심 텔레파시 게임
+│       ├── GamePainter    # CustomPainter 그래픽
+│       └── FadeInUp       # 진입 애니메이션
+├── specs/                 # 기능 명세 (SpecKit)
 └── README.md
 ```
 
@@ -125,12 +142,16 @@ thumb-some/
 
 ## Developer's Note
 
-### TDS (Toss Design System) 적용 포인트
+### M3 (Material Design 3) 적용 포인트
 
-1. **Color:** 토스 블루(`#0064FF`)를 베이스로, 게임의 키치함을 위해 네온 핑크/옐로우 믹스
-2. **Motion:** `SpringCurve`(`Curves.elasticOut`)로 쫀득한 인터랙션 구현
-3. **UX:** 복잡한 튜토리얼 없이 직관적인 행동 유도성(Affordance) 디자인
-4. **Typography:** `-0.5` letter spacing으로 토스 특유의 가독성 확보
+1. **Color:** `ColorScheme.fromSeed(seedColor: kitschPink, brightness: Brightness.dark)`로 전체 팔레트 자동 생성
+2. **Motion (하이브리드):**
+   - 일반 UI: M3 easing curves (`Easing.emphasizedDecelerate`, `Easing.standard`)
+   - 게임 피드백: `Curves.elasticOut` 유지 (쫀득한 느낌)
+3. **Components (하이브리드):**
+   - 표준 UI: Flutter M3 위젯 (`FilledButton`, `Card`)
+   - 게임 UI: 커스텀 구현 (O/X 버튼, 결과 카드)
+4. **UX:** 복잡한 튜토리얼 없이 직관적인 행동 유도성(Affordance) 디자인
 
 ### 쫀드기 챌린지 알고리즘
 
@@ -157,9 +178,10 @@ targetB = Offset(
 ## Roadmap
 
 - [x] MVP: 쫀드기 챌린지 기본 로직
-- [x] TDS 스타일 UI/UX
+- [x] M3 디자인 시스템 (Constitution v2.0)
 - [x] 햅틱 피드백
-- [ ] 이심전심 텔레파시 모드
+- [x] 이심전심 텔레파시 모드
+- [ ] M3 테마 코드 마이그레이션 (TDS → ColorScheme)
 - [ ] 복불복 룰렛 모드
 - [ ] Firebase 연동 (질문 리스트 Remote Config)
 - [ ] 결과 화면 공유 (인스타 스토리용 영수증 디자인)

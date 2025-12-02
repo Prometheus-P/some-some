@@ -9,17 +9,23 @@ void main() {
 }
 
 // -----------------------------------------------------------------------------
-// 1. DESIGN SYSTEM (Toss Style + Kitsch)
+// 1. DESIGN SYSTEM (Material Design 3 + Kitsch)
 // -----------------------------------------------------------------------------
+
+// M3 Seed Color - kitschPink generates the entire tonal palette
+const Color _seedColor = Color(0xFFFF007F); // kitschPink
+
+// Legacy TDS colors for backward compatibility during migration
+// TODO: Remove after full M3 migration
 class TDS {
-  static const Color background = Color(0xFF17171C); // 토스 다크 모드 배경
-  static const Color card = Color(0xFF202632); // 카드 배경
-  static const Color primaryBlue = Color(0xFF0064FF); // 토스 블루
-  static const Color kitschPink = Color(0xFFFF007F); // 썸썸 핑크
-  static const Color kitschYellow = Color(0xFFFFD700); // 썸썸 옐로우
-  static const Color textWhite = Color(0xFFFFFFFF);
-  static const Color textGrey = Color(0xFF8B95A1);
-  static const Color danger = Color(0xFFF04452); // 에러/실패
+  static const Color background = Color(0xFF17171C); // Legacy - use colorScheme.surface
+  static const Color card = Color(0xFF202632); // Legacy - use colorScheme.surfaceContainerHighest
+  static const Color primaryBlue = Color(0xFF0064FF); // Legacy - use colorScheme.secondary
+  static const Color kitschPink = Color(0xFFFF007F); // Legacy - use colorScheme.primary
+  static const Color kitschYellow = Color(0xFFFFD700); // Legacy - use colorScheme.tertiary
+  static const Color textWhite = Color(0xFFFFFFFF); // Legacy - use colorScheme.onSurface
+  static const Color textGrey = Color(0xFF8B95A1); // Legacy - use colorScheme.onSurfaceVariant
+  static const Color danger = Color(0xFFF04452); // Legacy - use colorScheme.error
 
   static const TextStyle titleBig = TextStyle(
     fontSize: 28,
@@ -41,7 +47,7 @@ class TDS {
     letterSpacing: -0.2,
   );
 
-  // 쫀득한 애니메이션 커브
+  // 쫀득한 애니메이션 커브 (게임 피드백용 - M3 하이브리드 모션)
   static const Curve spring = Curves.elasticOut;
 }
 
@@ -56,13 +62,20 @@ class ThumbSomeApp extends StatelessWidget {
     // 상태바 투명 처리 (몰입감 증대)
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
 
+    // M3 ColorScheme from seed color (Constitution v2.0)
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: Brightness.dark,
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Thumb Some',
       theme: ThemeData(
-        scaffoldBackgroundColor: TDS.background,
-        fontFamily: 'Pretendard', // 있으면 좋고 없으면 시스템 폰트
         useMaterial3: true,
+        colorScheme: colorScheme,
+        scaffoldBackgroundColor: colorScheme.surface,
+        fontFamily: 'Pretendard', // 있으면 좋고 없으면 시스템 폰트
       ),
       home: const IntroScreen(),
     );

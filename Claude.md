@@ -17,15 +17,16 @@ A mobile game that **forces physical contact as a game mechanic**. Two users mus
 ### ✅ Completed (MVP)
 - **Single-file architecture** (`main.dart`) - intentionally monolithic for rapid prototyping
 - **쫀드기 챌린지 (Sticky Fingers)** core game logic
-- **Toss Design System (TDS)** implementation with kitsch accents
+- **Material Design 3 (M3)** with kitschPink seed color theme
+- **이심전심 텔레파시 (Soul Sync)** compatibility quiz mode
 - **CustomPainter** for 60fps+ graphics rendering
 - **Haptic feedback** system (light/medium/heavy impacts)
-- **FadeInUp** animations with spring curves
+- **FadeInUp** animations with hybrid motion (M3 easing + elasticOut)
 - **Multi-touch** detection and tracking
 
 ### ⏳ Planned Features (Not Implemented)
-- **Mode B:** 이심전심 텔레파시 (Soul Sync) - compatibility quiz with split-screen
-- **Mode C:** 복불복 룰렛 (Penalty) - customizable penalty roulette
+- **Mode C:** 복불복 룰렛 (Penalty Roulette) - customizable penalty roulette
+- **M3 Theme Migration:** Apply M3 ColorScheme to existing TDS code
 - **Firebase integration** for remote question lists
 - **Result sharing** (Instagram story-style receipts)
 - **In-App Purchase** for additional content packs
@@ -55,20 +56,39 @@ lib/
 
 **⚠️ Rule:** Only refactor into modules **when adding Mode B or C**. Keep current simplicity for now.
 
-### 2. Design System (TDS)
+### 2. Design System (M3)
 
-**Base:** Toss Design System philosophy
-- **Colors:**
-  - `background: #17171C` (Dark mode base)
-  - `primaryBlue: #0064FF` (Toss brand color)
-  - `kitschPink: #FF007F` (Accent for game vibe)
-  - `kitschYellow: #FFD700` (Secondary accent)
+**Base:** Material Design 3 with custom kitschPink seed color
 
-- **Typography:** `-0.5` letter spacing for readability
-- **Motion:** `Curves.elasticOut` for "쫀득한" (chewy) feel
-- **Components:** Rounded corners (16px), clear hierarchy
+**Color System (M3 Tonal Palette):**
+- **Seed Color:** `kitschPink (#FF007F)` generates full tonal palette
+- **Primary:** kitschPink-derived tones (primary, onPrimary, primaryContainer)
+- **Secondary/Tertiary:** M3 algorithm auto-generated
+- **Surface:** M3 dark surface tokens
+- **Theme Mode:** Dark only (`Brightness.dark`)
 
-**⚠️ Rule:** Never deviate from TDS color palette. New colors require explicit approval.
+**Implementation:**
+```dart
+ThemeData(
+  useMaterial3: true,
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: Color(0xFFFF007F), // kitschPink
+    brightness: Brightness.dark,
+  ),
+)
+```
+
+**Typography:** M3 type scale via `TextTheme`, Korean-optimized font
+
+**Motion (Hybrid):**
+- **General UI:** M3 easing (`Easing.emphasizedDecelerate`, `Easing.standard`)
+- **Game Feedback:** `Curves.elasticOut` retained for "쫀득한" feel
+
+**Components (Hybrid):**
+- **Standard UI:** Flutter M3 widgets (`FilledButton`, `Card`)
+- **Game UI:** Custom implementation (O/X buttons, result cards)
+
+**⚠️ Rule:** All new UI MUST use M3 color tokens from `Theme.of(context).colorScheme`.
 
 ### 3. Game Logic - Sticky Fingers Algorithm
 
@@ -151,14 +171,15 @@ targetB = Offset(
 
 ### Adding a New Game Mode
 
-1. Create new screen widget (e.g., `SoulSyncScreen`)
+1. Create new screen widget (e.g., `PenaltyRouletteScreen`)
 2. Add navigation button in `IntroScreen`
 3. Design game logic with similar structure to `GameScreen`:
    - State management
    - Touch handling
    - Game loop (if needed)
    - Result overlay
-4. Reuse `TossButton`, `FadeInUp`, TDS constants
+4. Use M3 widgets (`FilledButton`) and `Theme.of(context).colorScheme` for colors
+5. Reuse `FadeInUp` animation with hybrid motion approach
 
 ### Tweaking Game Difficulty
 
@@ -267,7 +288,7 @@ dev_dependencies:
 ### When User Requests Are Ambiguous:
 
 1. **Default to simplicity:** Don't over-engineer
-2. **Match existing patterns:** Use TossButton, FadeInUp, TDS colors
+2. **Match existing patterns:** Use M3 widgets, `Theme.of(context).colorScheme`, FadeInUp
 3. **Preserve game feel:** Don't change physics without explicit ask
 
 ### When Adding New Features:
@@ -287,12 +308,12 @@ dev_dependencies:
 - Assets: None yet (all using emojis)
 
 ### Key Classes
-- `TDS` - Design system constants
+- `ThemeData` with M3 - Design system via `ColorScheme.fromSeed()`
 - `IntroScreen` - Landing page
-- `GameScreen` - Main game logic
+- `GameScreen` - Sticky Fingers game logic
+- `SoulSyncScreen` - Soul Sync quiz game
 - `GamePainter` - Canvas rendering
-- `TossButton` - Primary CTA component
-- `FadeInUp` - Entrance animation
+- `FadeInUp` - Entrance animation (hybrid motion)
 
 ### Build & Run
 ```bash
@@ -312,15 +333,15 @@ flutter build ios --release      # iOS build
 
 ## Contact & Resources
 
-- **Design Reference:** Toss app, Duolingo (playful UX)
+- **Design Reference:** Material Design 3 (m3.material.io), Duolingo (playful UX)
 - **Game Feel Reference:** Crossy Road, Monument Valley (haptic timing)
 - **Target Benchmark:** 60fps on iPhone 12, 120fps on iPhone 15 Pro
 
 ---
 
-**Last Updated:** 2025-12-01
-**Document Version:** 1.0
-**Project Phase:** MVP Complete
+**Last Updated:** 2025-12-02
+**Document Version:** 2.0
+**Project Phase:** Soul Sync Complete, M3 Migration In Progress
 
 ## Active Technologies
 - Dart 3.x / Flutter 3.x + Flutter SDK only (no external packages per Constitution) (001-soul-sync)
