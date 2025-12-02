@@ -1150,7 +1150,10 @@ class _FadeInUpState extends State<FadeInUp>
       animation: _controller,
       builder: (context, child) => Transform.translate(
         offset: _translate.value,
-        child: Opacity(opacity: _opacity.value, child: widget.child),
+        child: Opacity(
+          opacity: _opacity.value.clamp(0.0, 1.0),
+          child: widget.child,
+        ),
       ),
     );
   }
