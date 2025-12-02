@@ -34,11 +34,11 @@ jobs:
       - name: Verify formatting
         run: |
           echo "Running dart format check..."
-          dart format --output=show . > /tmp/format_output.txt 2>&1 || true
-          if [ -s /tmp/format_output.txt ]; then
-            echo "Format changes detected:"
-            head -200 /tmp/format_output.txt
-          fi
+          cp lib/main.dart /tmp/main_before.dart
+          dart format lib/main.dart
+          echo "Diff output:"
+          diff -u /tmp/main_before.dart lib/main.dart || true
+          git checkout lib/main.dart
           dart format --set-exit-if-changed .
 
       - name: Analyze code
