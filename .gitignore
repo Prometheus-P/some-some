@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════
 # 썸썸 (Thumb Some) - Git Ignore Rules
 # ═══════════════════════════════════════════════════════════════
-# Updated: 2025-12-01
+# Updated: 2025-12-02
 # Based on: Flutter Standard .gitignore + Project-specific rules
 # ═══════════════════════════════════════════════════════════════
 
@@ -17,6 +17,22 @@ secrets/
 firebase-adminsdk-*.json
 google-services.json
 GoogleService-Info.plist
+
+# ───────────────────────────────────────────────────────────────
+# AI / Claude Code
+# ───────────────────────────────────────────────────────────────
+# Claude Code settings (keep commands, ignore local settings)
+.claude/settings.json
+.claude/settings.local.json
+.claude/.credentials
+
+# ───────────────────────────────────────────────────────────────
+# SpecKit Workflow (keep templates, ignore temp files)
+# ───────────────────────────────────────────────────────────────
+.specify/tmp/
+.specify/cache/
+.specify/**/*.tmp
+.specify/**/*.bak
 
 # ───────────────────────────────────────────────────────────────
 # IDE - IntelliJ / Android Studio
