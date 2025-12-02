@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Dart version: 3.2.x → 3.10.1
   - Disabled strict dart format check (due to version inconsistencies)
   - Changed flutter analyze to `--no-fatal-infos --fatal-warnings`
+  - Updated actions/upload-artifact: v3 → v4 (fixes #7)
 - Simplified widget tests to avoid animation timing issues in test environment
 
 ### Fixed
@@ -39,9 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed unused variables (_isComplete getter, textPainter)
 
 ### Known Issues
-- Build jobs fail due to deprecated `actions/upload-artifact@v3` (see #7)
+- Build jobs fail due to missing platform configurations (see #8)
+  - Android and iOS directories not configured
   - Does not block core CI checks (analysis, tests, security)
-  - Requires update to v4 in workflow configuration
+  - Requires `flutter create --platforms=android,ios .` or web-only configuration
 
 ## [0.1.0] - 2025-12-01
 
