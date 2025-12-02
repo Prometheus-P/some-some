@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-12-02
+
 ### Added
 - Soul Sync (이심전심 텔레파시) mode - two-player compatibility test game
   - 50:50 split screen with 180° rotation for face-to-face play

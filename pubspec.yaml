@@ -2,7 +2,7 @@ name: thumb_some
 description: "썸썸 - 게임인 척하며 자연스럽게 손잡기"
 publish_to: 'none' # 퍼블리싱 하지 않음
 
-version: 1.0.0+1
+version: 0.2.0+2
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
