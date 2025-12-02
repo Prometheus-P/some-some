@@ -32,7 +32,14 @@ jobs:
           dart --version
 
       - name: Verify formatting
-        run: dart format --set-exit-if-changed .
+        run: |
+          echo "Running dart format check..."
+          dart format --output=show . > /tmp/format_output.txt 2>&1 || true
+          if [ -s /tmp/format_output.txt ]; then
+            echo "Format changes detected:"
+            head -200 /tmp/format_output.txt
+          fi
+          dart format --set-exit-if-changed .
 
       - name: Analyze code
         run: flutter analyze --fatal-infos --fatal-warnings
