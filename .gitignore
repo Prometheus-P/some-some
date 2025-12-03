@@ -105,15 +105,22 @@ refresh_token*
 dump*.sql
 
 # ┌─────────────────────────────────────────────────────────────────────────┐
-# │ 🤖 AI & DEVELOPMENT TOOLS (Environment-Specific)                       │
-# │ These files contain local settings and should not be shared            │
+# │ 🤖 AI & DEVELOPMENT TOOLS                                              │
+# │ Shared configs are tracked, local/sensitive settings are ignored       │
 # └─────────────────────────────────────────────────────────────────────────┘
 
-# Claude Code - ENTIRE directory (environment-specific)
-.claude/
+# Claude Code - Track commands, ignore local settings
+.claude/settings.json
+.claude/settings.local.json
+.claude/.credentials
+# .claude/commands/ is TRACKED (shared across team)
 
-# SpecKit Workflow - ENTIRE directory (environment-specific)
-.specify/
+# SpecKit Workflow - Track templates/scripts, ignore temp files
+.specify/tmp/
+.specify/cache/
+.specify/**/*.tmp
+.specify/**/*.bak
+# .specify/templates/, .specify/scripts/, .specify/memory/ are TRACKED
 
 # Cursor AI
 .cursorignore
