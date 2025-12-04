@@ -15,57 +15,31 @@ void main() {
 // M3 Seed Color - kitschPink generates the entire tonal palette
 const Color _seedColor = Color(0xFFFF007F); // kitschPink
 
-// Legacy TDS colors for backward compatibility during migration
-// TODO: Remove after full M3 migration
-class TDS {
-  static const Color background = Color(
-    0xFF17171C,
-  ); // Legacy - use colorScheme.surface
-  static const Color card = Color(
-    0xFF202632,
-  ); // Legacy - use colorScheme.surfaceContainerHighest
-  static const Color primaryBlue = Color(
-    0xFF0064FF,
-  ); // Legacy - use colorScheme.secondary
-  static const Color kitschPink = Color(
-    0xFFFF007F,
-  ); // Legacy - use colorScheme.primary
-  static const Color kitschYellow = Color(
-    0xFFFFD700,
-  ); // Legacy - use colorScheme.tertiary
-  static const Color textWhite = Color(
-    0xFFFFFFFF,
-  ); // Legacy - use colorScheme.onSurface
-  static const Color textGrey = Color(
-    0xFF8B95A1,
-  ); // Legacy - use colorScheme.onSurfaceVariant
-  static const Color danger = Color(
-    0xFFF04452,
-  ); // Legacy - use colorScheme.error
+// 쫀득한 애니메이션 커브 (게임 피드백용 - M3 하이브리드 모션)
+const Curve kSpringCurve = Curves.elasticOut;
 
-  static const TextStyle titleBig = TextStyle(
-    fontSize: 28,
-    fontWeight: FontWeight.bold,
-    color: textWhite,
-    letterSpacing: -0.5,
-    height: 1.3,
-  );
-  static const TextStyle titleMedium = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.bold,
-    color: textWhite,
-    letterSpacing: -0.5,
-  );
-  static const TextStyle body = TextStyle(
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    color: Color(0xFFB0B8C1),
-    letterSpacing: -0.2,
-  );
+// M3 Text Style helpers (Korean-optimized, following M3 type scale)
+TextStyle titleBig(ColorScheme cs) => TextStyle(
+  fontSize: 28,
+  fontWeight: FontWeight.bold,
+  color: cs.onSurface,
+  letterSpacing: -0.5,
+  height: 1.3,
+);
 
-  // 쫀득한 애니메이션 커브 (게임 피드백용 - M3 하이브리드 모션)
-  static const Curve spring = Curves.elasticOut;
-}
+TextStyle titleMedium(ColorScheme cs) => TextStyle(
+  fontSize: 22,
+  fontWeight: FontWeight.bold,
+  color: cs.onSurface,
+  letterSpacing: -0.5,
+);
+
+TextStyle bodyText(ColorScheme cs) => TextStyle(
+  fontSize: 16,
+  fontWeight: FontWeight.w500,
+  color: cs.onSurfaceVariant,
+  letterSpacing: -0.2,
+);
 
 // -----------------------------------------------------------------------------
 // 2. MAIN APP
@@ -129,6 +103,8 @@ class _IntroScreenState extends State<IntroScreen>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -137,18 +113,18 @@ class _IntroScreenState extends State<IntroScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 60),
-              // Toss Style Header
+              // M3 Style Header
               FadeInUp(
                 delay: 0,
                 child: Text(
                   "너랑 나랑\n손끝 시그널",
-                  style: TDS.titleBig.copyWith(fontSize: 34),
+                  style: titleBig(cs).copyWith(fontSize: 34),
                 ),
               ),
               const SizedBox(height: 12),
               FadeInUp(
                 delay: 200,
-                child: Text("진지함은 빼고,\n스킨십은 더하고!", style: TDS.body),
+                child: Text("진지함은 빼고,\n스킨십은 더하고!", style: bodyText(cs)),
               ),
 
               const Spacer(),
@@ -170,7 +146,7 @@ class _IntroScreenState extends State<IntroScreen>
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: TDS.primaryBlue.withOpacity(0.2),
+                              color: cs.secondary.withOpacity(0.2),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -184,7 +160,7 @@ class _IntroScreenState extends State<IntroScreen>
                             width: 120,
                             height: 120,
                             decoration: BoxDecoration(
-                              color: TDS.kitschPink.withOpacity(0.2),
+                              color: cs.primary.withOpacity(0.2),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -198,12 +174,12 @@ class _IntroScreenState extends State<IntroScreen>
 
               const Spacer(),
 
-              // Toss Style Button - 쫀드기 챌린지
+              // M3 Style Button - 쫀드기 챌린지
               FadeInUp(
                 delay: 400,
                 child: TossButton(
                   text: "쫀드기 챌린지 시작하기",
-                  color: TDS.primaryBlue,
+                  color: cs.secondary,
                   onTap: () {
                     HapticFeedback.mediumImpact();
                     Navigator.push(
@@ -219,7 +195,7 @@ class _IntroScreenState extends State<IntroScreen>
                 delay: 500,
                 child: TossButton(
                   text: "이심전심 텔레파시",
-                  color: TDS.kitschPink,
+                  color: cs.primary,
                   onTap: () {
                     HapticFeedback.mediumImpact();
                     Navigator.push(
@@ -235,7 +211,7 @@ class _IntroScreenState extends State<IntroScreen>
                 child: Center(
                   child: Text(
                     "술자리 / 카페 / 썸 탈때 추천",
-                    style: TDS.body.copyWith(fontSize: 12),
+                    style: bodyText(cs).copyWith(fontSize: 12),
                   ),
                 ),
               ),
@@ -389,6 +365,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -422,6 +400,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     targetB: targetB,
                     progress: progress,
                     isPlaying: isPlaying,
+                    primaryColor: cs.primary,
+                    secondaryColor: cs.secondary,
+                    tertiaryColor: cs.tertiary,
                   ),
                 ),
               ),
@@ -433,34 +414,37 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             top: 60,
             left: 0,
             right: 0,
-            child: Column(
-              children: [
-                if (!isPlaying && !isGameOver && !isSuccess)
-                  FadeInUp(
-                    child: Column(
-                      children: [
-                        const Text("🐻", style: TextStyle(fontSize: 40)),
-                        const SizedBox(height: 10),
-                        Text(
-                          "각자 캐릭터를\n꾹 눌러주세요",
-                          textAlign: TextAlign.center,
-                          style: TDS.titleMedium.copyWith(
-                            color: TDS.kitschYellow,
+            child: Builder(builder: (context) {
+              final cs = Theme.of(context).colorScheme;
+              return Column(
+                children: [
+                  if (!isPlaying && !isGameOver && !isSuccess)
+                    FadeInUp(
+                      child: Column(
+                        children: [
+                          const Text("🐻", style: TextStyle(fontSize: 40)),
+                          const SizedBox(height: 10),
+                          Text(
+                            "각자 캐릭터를\n꾹 눌러주세요",
+                            textAlign: TextAlign.center,
+                            style: titleMedium(cs).copyWith(
+                              color: cs.tertiary,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                if (isPlaying)
-                  Text(
-                    "${(progress * 100).toInt()}%",
-                    style: TDS.titleBig.copyWith(
-                      fontSize: 40,
-                      color: TDS.textWhite.withOpacity(0.5),
+                  if (isPlaying)
+                    Text(
+                      "${(progress * 100).toInt()}%",
+                      style: titleBig(cs).copyWith(
+                        fontSize: 40,
+                        color: cs.onSurface.withOpacity(0.5),
+                      ),
                     ),
-                  ),
-              ],
-            ),
+                ],
+              );
+            }),
           ),
 
           // 3. Result Overlay
@@ -472,6 +456,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildFailOverlay() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       color: Colors.black.withOpacity(0.8),
       child: Center(
@@ -480,17 +465,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text("😱", style: TextStyle(fontSize: 80)),
-              Text("띠로리~", style: TDS.titleBig.copyWith(color: TDS.danger)),
+              Text("띠로리~", style: titleBig(cs).copyWith(color: cs.error)),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "손을 놓쳐버렸어요!\n(벌칙: 서로 10초간 눈맞춤)",
                 textAlign: TextAlign.center,
-                style: TDS.body,
+                style: bodyText(cs),
               ),
               const SizedBox(height: 30),
               TossButton(
                 text: "다시 도전",
-                color: TDS.danger,
+                color: cs.error,
                 onTap: () {
                   setState(() {
                     isGameOver = false;
@@ -506,6 +491,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildSuccessOverlay() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       color: Colors.black.withOpacity(0.8),
       child: Center(
@@ -516,18 +502,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               const Text("🎉", style: TextStyle(fontSize: 80)),
               Text(
                 "천생연분!",
-                style: TDS.titleBig.copyWith(color: TDS.kitschPink),
+                style: titleBig(cs).copyWith(color: cs.primary),
               ),
               const SizedBox(height: 10),
-              const Text(
+              Text(
                 "이 정도면 사귀어야 하는 거 아님?",
                 textAlign: TextAlign.center,
-                style: TDS.body,
+                style: bodyText(cs),
               ),
               const SizedBox(height: 30),
               TossButton(
                 text: "다음 단계로",
-                color: TDS.kitschPink,
+                color: cs.primary,
                 onTap: () {
                   setState(() {
                     isSuccess = false;
@@ -674,6 +660,8 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
 
     final currentQuestion = _questions[_currentIndex];
 
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -694,7 +682,7 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
             // Divider (LR-005)
             Container(
               height: _SoulSyncLayout.dividerHeight,
-              color: TDS.textGrey.withOpacity(0.3),
+              color: cs.outlineVariant.withOpacity(0.3),
               margin: const EdgeInsets.symmetric(horizontal: 24),
             ),
             // Progress indicator
@@ -702,7 +690,7 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
                 "${_currentIndex + 1} / 5",
-                style: TDS.body.copyWith(color: TDS.textGrey),
+                style: bodyText(cs).copyWith(color: cs.onSurfaceVariant),
               ),
             ),
             // Bottom player area (normal orientation)
@@ -767,9 +755,11 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
       _triggerResultHaptic();
     });
 
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       body: Container(
-        color: TDS.background,
+        color: cs.surface,
         child: SafeArea(
           child: Center(
             child: FadeInUp(
@@ -784,30 +774,30 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
                     // T015: Result message
                     Text(
                       _resultMessage,
-                      style: TDS.titleBig.copyWith(
+                      style: titleBig(cs).copyWith(
                         fontSize: 36,
                         color: _percent >= 80
-                            ? TDS.kitschPink
+                            ? cs.primary
                             : _percent >= 50
-                            ? TDS.kitschYellow
-                            : TDS.textGrey,
+                            ? cs.tertiary
+                            : cs.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 16),
                     // Match count
-                    Text("$_matches / 5 일치 ($_percent%)", style: TDS.body),
+                    Text("$_matches / 5 일치 ($_percent%)", style: bodyText(cs)),
                     const SizedBox(height: 40),
                     // T018: 다시하기 버튼
                     TossButton(
                       text: "다시하기",
-                      color: TDS.kitschPink,
+                      color: cs.primary,
                       onTap: _restartGame,
                     ),
                     const SizedBox(height: 12),
                     // T019: 홈으로 버튼
                     TossButton(
                       text: "홈으로",
-                      color: TDS.textGrey,
+                      color: cs.onSurfaceVariant,
                       onTap: _goHome,
                     ),
                   ],
@@ -839,6 +829,8 @@ class _PlayerArea extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
@@ -848,24 +840,26 @@ class _PlayerArea extends StatelessWidget {
           Text(
             question,
             textAlign: TextAlign.center,
-            style: TDS.titleMedium.copyWith(fontSize: 18),
+            style: titleMedium(cs).copyWith(fontSize: 18),
           ),
           const SizedBox(height: 24),
           // 대기 중이면 대기 메시지 표시
           if (isWaiting)
-            Text("기다리는 중~", style: TDS.body.copyWith(color: TDS.kitschYellow))
+            Text("기다리는 중~", style: bodyText(cs).copyWith(color: cs.tertiary))
           else
             // O/X 버튼
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildOXButton(
+                  context: context,
                   isO: true,
                   disabled: answered != null,
                   onTap: () => onAnswer(true),
                 ),
                 const SizedBox(width: _SoulSyncLayout.buttonSpacing),
                 _buildOXButton(
+                  context: context,
                   isO: false,
                   disabled: answered != null,
                   onTap: () => onAnswer(false),
@@ -878,11 +872,13 @@ class _PlayerArea extends StatelessWidget {
   }
 
   Widget _buildOXButton({
+    required BuildContext context,
     required bool isO,
     required VoidCallback onTap,
     bool disabled = false,
   }) {
-    final color = isO ? TDS.primaryBlue : TDS.kitschPink;
+    final cs = Theme.of(context).colorScheme;
+    final color = isO ? cs.secondary : cs.primary;
     // C5: Semantics wrapper for future accessibility (AR-006)
     return Semantics(
       label: isO ? '동의 버튼' : '비동의 버튼',
@@ -937,6 +933,9 @@ class GamePainter extends CustomPainter {
   final Offset targetB;
   final double progress;
   final bool isPlaying;
+  final Color primaryColor;
+  final Color secondaryColor;
+  final Color tertiaryColor;
 
   GamePainter({
     required this.pointers,
@@ -944,6 +943,9 @@ class GamePainter extends CustomPainter {
     required this.targetB,
     required this.progress,
     required this.isPlaying,
+    required this.primaryColor,
+    required this.secondaryColor,
+    required this.tertiaryColor,
   });
 
   @override
@@ -956,13 +958,13 @@ class GamePainter extends CustomPainter {
       final p2 = pointers.values.last;
 
       // Glow Effect
-      paint.color = TDS.kitschPink.withOpacity(0.3);
+      paint.color = primaryColor.withOpacity(0.3);
       paint.strokeWidth = 10;
       paint.strokeCap = StrokeCap.round;
       canvas.drawLine(p1, p2, paint);
 
       // Core Line
-      paint.color = TDS.kitschPink;
+      paint.color = primaryColor;
       paint.strokeWidth = 3;
       canvas.drawLine(p1, p2, paint);
 
@@ -973,7 +975,7 @@ class GamePainter extends CustomPainter {
           canvas,
           "어머! 닿겠어!",
           (p1 + p2) / 2 + const Offset(0, -40),
-          TDS.kitschYellow,
+          tertiaryColor,
           14,
           true,
         );
@@ -981,8 +983,8 @@ class GamePainter extends CustomPainter {
     }
 
     // 2. Draw Targets (Bear & Rabbit)
-    _drawCharacter(canvas, targetA, "🐻", TDS.primaryBlue);
-    _drawCharacter(canvas, targetB, "🐰", TDS.kitschPink);
+    _drawCharacter(canvas, targetA, "🐻", secondaryColor);
+    _drawCharacter(canvas, targetB, "🐰", primaryColor);
 
     // 3. Draw User Touches (Visual Feedback)
     pointers.forEach((id, pos) {
@@ -1127,11 +1129,11 @@ class _FadeInUpState extends State<FadeInUp>
     _opacity = Tween<double>(
       begin: 0,
       end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
+    ).animate(CurvedAnimation(parent: _controller, curve: kSpringCurve));
     _translate = Tween<Offset>(
       begin: const Offset(0, 20),
       end: Offset.zero,
-    ).animate(CurvedAnimation(parent: _controller, curve: TDS.spring));
+    ).animate(CurvedAnimation(parent: _controller, curve: kSpringCurve));
 
     Future.delayed(Duration(milliseconds: widget.delay), () {
       if (mounted) _controller.forward();

@@ -1,50 +1,155 @@
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
 # 썸썸 (Thumb Some) - Git Ignore Rules
-# ═══════════════════════════════════════════════════════════════
-# Updated: 2025-12-02
-# Based on: Flutter Standard .gitignore + Project-specific rules
-# ═══════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════
+# Updated: 2025-12-03
+# Security Level: HIGH - Block first, allow exceptions
+# ═══════════════════════════════════════════════════════════════════════════
 
-# ───────────────────────────────────────────────────────────────
-# Environment Variables & Secrets (CRITICAL!)
-# ───────────────────────────────────────────────────────────────
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 🔐 SECURITY CRITICAL - SECRETS & CREDENTIALS                           │
+# │ These patterns MUST be blocked to prevent credential leaks             │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# Environment Variables (ALL variants)
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.env
+env.local
+env.*.local
+
+# API Keys & Tokens
 *.key
 *.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.der
+*_rsa
+*_rsa.pub
+*_dsa
+*_dsa.pub
+*_ecdsa
+*_ecdsa.pub
+*_ed25519
+*_ed25519.pub
+*.gpg
+*.asc
+
+# Secrets directories
 secrets/
-firebase-adminsdk-*.json
+.secrets/
+credentials/
+.credentials/
+private/
+.private/
+
+# Cloud Provider Credentials
+# AWS
+.aws/
+aws-credentials*
+*.aws-credentials
+
+# GCP
+*.json
+!package.json
+!pubspec.json
+!*.lock.json
+!tsconfig*.json
+!.vscode/*.json
+!.prettierrc.json
+!.eslintrc.json
+gcloud-*.json
+*-firebase-adminsdk-*.json
+firebase-adminsdk*.json
+service-account*.json
+
+# Firebase (Mobile)
 google-services.json
 GoogleService-Info.plist
+firebase_options.dart
 
-# ───────────────────────────────────────────────────────────────
-# AI / Claude Code
-# ───────────────────────────────────────────────────────────────
-# Claude Code settings (keep commands, ignore local settings)
+# Android Signing
+*.jks
+*.keystore
+key.properties
+upload-keystore.jks
+release.keystore
+
+# iOS Signing & Provisioning
+*.mobileprovision
+*.provisionprofile
+AuthKey_*.p8
+*.xcprivacy
+
+# SSH
+.ssh/
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+known_hosts
+
+# OAuth & Auth
+oauth*.json
+auth*.json
+token*.json
+refresh_token*
+
+# Database
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+dump*.sql
+
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 🤖 AI & DEVELOPMENT TOOLS                                              │
+# │ Shared configs are tracked, local/sensitive settings are ignored       │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# Claude Code - Track commands, ignore local settings
 .claude/settings.json
 .claude/settings.local.json
 .claude/.credentials
+# .claude/commands/ is TRACKED (shared across team)
 
-# ───────────────────────────────────────────────────────────────
-# SpecKit Workflow (keep templates, ignore temp files)
-# ───────────────────────────────────────────────────────────────
+# SpecKit Workflow - Track templates/scripts, ignore temp files
 .specify/tmp/
 .specify/cache/
 .specify/**/*.tmp
 .specify/**/*.bak
+# .specify/templates/, .specify/scripts/, .specify/memory/ are TRACKED
 
-# ───────────────────────────────────────────────────────────────
-# IDE - IntelliJ / Android Studio
-# ───────────────────────────────────────────────────────────────
+# Cursor AI
+.cursorignore
+.cursor/
+
+# GitHub Copilot
+.copilot/
+
+# Codeium
+.codeium/
+
+# Continue.dev
+.continue/
+
+# Aider
+.aider*
+
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 💻 IDE & EDITOR SETTINGS                                               │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# IntelliJ / Android Studio
 .idea/
 *.iml
 *.ipr
 *.iws
+.idea_modules/
 
-# ───────────────────────────────────────────────────────────────
-# IDE - VS Code
-# ───────────────────────────────────────────────────────────────
+# VS Code
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -52,69 +157,127 @@ GoogleService-Info.plist
 !.vscode/extensions.json
 *.code-workspace
 
-# ───────────────────────────────────────────────────────────────
-# Miscellaneous
-# ───────────────────────────────────────────────────────────────
-*.class
-*.lock
-*.log
-*.pyc
+# Vim / Neovim
 *.swp
-.buildlog/
-.history
+*.swo
+*.swn
+*~
+.vim/
+.nvim/
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Xcode
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 🖥️ OS-SPECIFIC FILES                                                   │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
 
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
+# Linux
+.directory
+.Trash-*
 
-# Flutter repo-specific
-/bin/cache/
-/bin/internal/bootstrap.bat
-/bin/internal/bootstrap.sh
-/bin/mingit/
-/dev/benchmarks/mega_gallery/
-/dev/bots/.recipe_deps
-/dev/bots/android_tools/
-/dev/devicelab/ABresults*.json
-/dev/docs/doc/
-/dev/docs/flutter.docs.zip
-/dev/docs/lib/
-/dev/docs/pubspec.yaml
-/dev/integration_tests/**/xcuserdata
-/dev/integration_tests/**/Pods
-/packages/flutter/coverage/
-version
-analysis_benchmark.json
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 📦 BUILD ARTIFACTS & DEPENDENCIES                                      │
+# └─────────────────────────────────────────────────────────────────────────┘
 
-# packages file containing multi-root paths
-.packages.generated
+# General
+build/
+dist/
+out/
+target/
+*.log
+*.tmp
+*.temp
+*.cache
 
-# Flutter/Dart/Pub related
-**/doc/api/
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.yarn/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+*.egg
+venv/
+.venv/
+ENV/
+env/
+
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 🐦 FLUTTER & DART SPECIFIC                                             │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# Dart Tool
 .dart_tool/
+.packages
+
+# Flutter
 .flutter-plugins
 .flutter-plugins-dependencies
 **/generated_plugin_registrant.dart
-.packages
 .pub-preload-cache/
 .pub/
-build/
+pubspec.lock
+
+# Generated files
+**/doc/api/
 flutter_*.png
 linked_*.ds
 unlinked.ds
 unlinked_spec.ds
 
-# Android related
-**/android/**/gradle-wrapper.jar
+# Android
 .gradle/
 **/android/captures/
 **/android/gradlew
 **/android/gradlew.bat
 **/android/local.properties
+**/android/**/gradle-wrapper.jar
 **/android/**/GeneratedPluginRegistrant.java
-**/android/key.properties
-*.jks
 
-# iOS/XCode related
+# iOS
 **/ios/**/*.mode1v3
 **/ios/**/*.mode2v3
 **/ios/**/*.moved-aside
@@ -144,33 +307,58 @@ unlinked_spec.ds
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
-# macOS
+# macOS Flutter
 **/Flutter/ephemeral/
 **/Pods/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral
 **/xcuserdata/
 
-# Windows
+# Windows Flutter
 **/windows/flutter/generated_plugin_registrant.cc
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
 
-# Linux
+# Linux Flutter
 **/linux/flutter/generated_plugin_registrant.cc
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
 
 # Coverage
 coverage/
+.coverage
+*.lcov
 
 # Symbols
 app.*.symbols
 
-# Exceptions to above rules.
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ 📋 LOGS & TEMPORARY FILES                                              │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+*.log
+*.logs
+logs/
+.buildlog/
+.history
+crash*.json
+*.stackdump
+
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │ ✅ EXCEPTIONS (Files that SHOULD be tracked)                           │
+# └─────────────────────────────────────────────────────────────────────────┘
+
+# iOS default configs (keep these)
 !**/ios/**/default.mode1v3
 !**/ios/**/default.mode2v3
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
+
+# Flutter repo test data
 !/packages/flutter_tools/test/data/dart_dependencies_test/**/.packages
 !/dev/ci/**/Gemfile.lock
+
+# Example/Template files (safe to share)
+!.env.example
+!*.example
+!*.template
