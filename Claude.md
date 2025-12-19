@@ -2,10 +2,12 @@
 
 ## Project Overview
 
-**Project Name:** 썸썸 (Thumb Some) 👆💕👆
+**Project Name:** 썸썸 (Thumb Some)
 **Tagline:** "게임인 척하며 자연스럽게 손잡기"
 **Type:** Flutter-based Hyper-Casual Social Interactive App
 **Target Users:** 20-30대 남녀 (썸 초기 단계, 소개팅/술자리)
+**Version:** 0.3.0
+**Copyright:** (c) 2025 Prometheus-P. All rights reserved.
 
 ### Core Concept
 A mobile game that **forces physical contact as a game mechanic**. Two users must touch and hold moving characters on a shared smartphone screen for 15 seconds, creating natural skinship through gameplay.
@@ -14,338 +16,245 @@ A mobile game that **forces physical contact as a game mechanic**. Two users mus
 
 ## Current Implementation Status
 
-### ✅ Completed (MVP)
-- **Single-file architecture** (`main.dart`) - intentionally monolithic for rapid prototyping
-- **쫀드기 챌린지 (Sticky Fingers)** core game logic
+### ✅ Completed
+- **Modular architecture** (lib/app, core, design_system, features)
+- **쫀드기 챌린지 (Sticky Fingers)** - 15초 터치 홀드 게임
+- **이심전심 텔레파시 (Soul Sync)** - 호환성 퀴즈 모드
 - **Material Design 3 (M3)** with kitschPink seed color theme
-- **이심전심 텔레파시 (Soul Sync)** compatibility quiz mode
-- **CustomPainter** for 60fps+ graphics rendering
-- **Haptic feedback** system (light/medium/heavy impacts)
-- **FadeInUp** animations with hybrid motion (M3 easing + elasticOut)
-- **Multi-touch** detection and tracking
+- **Design System** (tds.dart - typography, colors, motion)
+- **Content Packs** system (동적 텍스트 로딩)
+- **Settings** persistence (민감도, 배터리 세이버)
+- **Result sharing** (스크린샷 공유)
+- **Analytics** framework (텔레메트리)
 
-### ⏳ Planned Features (Not Implemented)
-- **Mode C:** 복불복 룰렛 (Penalty Roulette) - customizable penalty roulette
-- **M3 Theme Migration:** Apply M3 ColorScheme to existing TDS code
+### ⏳ Planned Features
+- **Mode C:** 복불복 룰렛 (Penalty Roulette)
 - **Firebase integration** for remote question lists
-- **Result sharing** (Instagram story-style receipts)
 - **In-App Purchase** for additional content packs
 
 ---
 
-## Architecture Principles
+## Architecture
 
-### 1. File Structure Philosophy
-**Current:** Single-file MVP (`main.dart`)
-**Future:** When complexity grows, split into:
+### File Structure (Modular)
 ```
 lib/
-├── main.dart
+├── main.dart                    # Entry point only
+├── app/
+│   └── app.dart                 # ThumbSomeApp (MaterialApp config)
 ├── core/
-│   ├── design_system/
-│   │   └── tds.dart
-│   └── utils/
-├── features/
-│   ├── intro/
-│   ├── sticky_fingers/
-│   ├── soul_sync/
-│   └── penalty_roulette/
-└── shared/
-    └── widgets/
+│   ├── app_links.dart           # External URLs
+│   ├── haptics/haptics.dart     # Haptic feedback
+│   ├── packs/                   # Content pack system
+│   ├── settings/                # User preferences
+│   ├── share/                   # Screenshot sharing
+│   └── telemetry/               # Analytics
+├── design_system/
+│   ├── tds.dart                 # Design tokens (colors, typography)
+│   ├── components/              # Reusable widgets (TossButton)
+│   └── motion/                  # Animations (FadeInUp)
+└── features/
+    ├── intro/                   # Landing screen
+    ├── sticky_fingers/          # Main game
+    └── soul_sync/               # Quiz game
 ```
 
-**⚠️ Rule:** Only refactor into modules **when adding Mode B or C**. Keep current simplicity for now.
+### Flutter Design Patterns (필수 준수)
 
-### 2. Design System (M3)
+**1. State Management:**
+- `StatefulWidget` + `ValueNotifier` for local state
+- Game loop: `Ticker` with `ValueNotifier<double>` for progress
+- Avoid `setState()` in game loops (use ValueListenableBuilder)
 
-**Base:** Material Design 3 with custom kitschPink seed color
+**2. Widget Composition:**
+- Small, focused widgets (Single Responsibility)
+- Extract reusable components to `design_system/components/`
+- Use `const` constructors where possible
 
-**Color System (M3 Tonal Palette):**
-- **Seed Color:** `kitschPink (#FF007F)` generates full tonal palette
-- **Primary:** kitschPink-derived tones (primary, onPrimary, primaryContainer)
-- **Secondary/Tertiary:** M3 algorithm auto-generated
-- **Surface:** M3 dark surface tokens
-- **Theme Mode:** Dark only (`Brightness.dark`)
+**3. Separation of Concerns:**
+- UI logic: `features/` (screens, widgets)
+- Business logic: `core/` (services, utilities)
+- Presentation: `design_system/` (tokens, components)
 
-**Implementation:**
+**4. Dependency Injection:**
+- Pass dependencies through constructors
+- Use factory patterns for services (e.g., `PackLoader`, `SettingsStore`)
+
+**5. Immutability:**
+- Prefer immutable data classes
+- Use `final` for fields, `const` for compile-time constants
+
+---
+
+## Design System (M3)
+
+**Seed Color:** `kitschPink (#FF007F)`
+
 ```dart
-ThemeData(
-  useMaterial3: true,
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: Color(0xFFFF007F), // kitschPink
-    brightness: Brightness.dark,
-  ),
+ColorScheme.fromSeed(
+  seedColor: Color(0xFFFF007F),
+  brightness: Brightness.dark,
 )
 ```
 
-**Typography:** M3 type scale via `TextTheme`, Korean-optimized font
+**Typography:** (from `tds.dart`)
+- `titleBig(cs)` - 28pt bold
+- `titleMedium(cs)` - 22pt bold
+- `titleSmall(cs)` - 16pt semibold
+- `bodyText(cs)` - 16pt medium
+- `bodyBig(cs)` - 18pt medium
+- `bodySmall(cs)` - 14pt regular
 
-**Motion (Hybrid):**
-- **General UI:** M3 easing (`Easing.emphasizedDecelerate`, `Easing.standard`)
-- **Game Feedback:** `Curves.elasticOut` retained for "쫀득한" feel
+**Motion:**
+- `kSpringCurve = Curves.elasticOut` - 게임 피드백용 "쫀득한" 느낌
+- `FadeInUp` - 800ms, elasticOut curve
 
-**Components (Hybrid):**
-- **Standard UI:** Flutter M3 widgets (`FilledButton`, `Card`)
-- **Game UI:** Custom implementation (O/X buttons, result cards)
-
-**⚠️ Rule:** All new UI MUST use M3 color tokens from `Theme.of(context).colorScheme`.
-
-### 3. Game Logic - Sticky Fingers Algorithm
-
-**Target Movement (8-figure path):**
-```dart
-// Sin/Cos combination creates crossing paths
-targetA = Offset(
-  centerX - 80 + sin(_time * 1.5) * 60 * intensity,
-  centerY + cos(_time * 2.1) * 100 * intensity,
-);
-
-targetB = Offset(
-  centerX + 80 + cos(_time * 1.8) * 60 * intensity,  // Opposite phase
-  centerY + sin(_time * 2.4) * 100 * intensity,
-);
-```
-
-**Physics Parameters:**
-- `gameDuration: 15.0` seconds
-- `targetRadius: 45.0` (visual circle)
-- `touchTolerance: 60.0` (hit detection)
-- `intensity: 1.0 + (progress * 2.0)` (difficulty scaling)
-
-**⚠️ Rule:** Don't change physics constants without playtesting. Current values are carefully balanced.
-
-### 4. Performance Optimization
-
-**Critical Requirements:**
-- Maintain **60fps minimum** (120fps preferred on ProMotion displays)
-- Use `Ticker` directly, not `AnimationController` for game loop
-- `CustomPainter.shouldRepaint` always returns `true` (intentional - game state changes every frame)
-
-**⚠️ Rule:** Profile performance before/after ANY game loop changes.
+**Rule:** All UI MUST use `Theme.of(context).colorScheme` tokens.
 
 ---
 
 ## Development Guidelines
 
+### TDD Cycle (필수)
+
+**모든 새 기능은 TDD 사이클을 따름:**
+
+1. **Red:** 실패하는 테스트 먼저 작성
+   ```dart
+   test('Soul Sync returns 천생연분 when match >= 80%', () {
+     expect(getResultMessage(80), '천생연분!');
+   });
+   ```
+
+2. **Green:** 테스트 통과하는 최소한의 코드 작성
+   ```dart
+   String getResultMessage(int percent) {
+     if (percent >= 80) return '천생연분!';
+     // ...
+   }
+   ```
+
+3. **Refactor:** 코드 정리 (테스트 통과 유지)
+
+**Test Categories:**
+- `test/unit/` - 비즈니스 로직 (game logic, utilities)
+- `test/widget/` - UI 컴포넌트 (isolated widget tests)
+- `test/integration/` - 전체 플로우 (feature tests)
+
+**Coverage Target:** 새 코드 80% 이상
+
 ### Code Style
 
 1. **Dart Formatting:**
-   - Use `dart format` before commits
-   - Line length: 120 characters (not 80)
-   - Prefer expression bodies for single-line getters
+   - `dart format .` before commits
+   - Line length: 120 characters
 
 2. **Naming Conventions:**
-   - Private variables: `_camelCase`
-   - Constants: `camelCase` (not SCREAMING_SNAKE)
-   - Widget classes: `PascalCase`
+   - Private: `_camelCase`
+   - Constants: `camelCase`
+   - Widgets: `PascalCase`
 
 3. **Comments:**
-   - Korean OK for domain-specific terms (e.g., `// 쫀드기 로직`)
-   - English for generic programming concepts
-   - Use section dividers like `// -----------------------------------------------------------------------------`
-
-### Testing Strategy
-
-**Current:** Manual testing only (acceptable for MVP)
-**Future:** When adding new modes:
-- Unit tests for game logic (collision detection, timer)
-- Widget tests for UI components
-- Integration tests for full game flow
-
-**⚠️ Rule:** Don't write tests for current MVP unless bugs appear in production.
+   - Korean OK for domain terms (`// 쫀드기 로직`)
+   - English for technical concepts
 
 ### Git Workflow
 
-1. **Branch naming:** `claude/feature-name-{sessionId}`
-2. **Commit style:**
+1. **Branch naming:** `feature/feature-name` or `fix/bug-name`
+
+2. **Commit style (Co-Authored-By 없이):**
    ```
-   feat: add soul sync mode basic UI
+   feat: add penalty roulette mode
    fix: prevent game start with single touch
    refactor: extract game logic from widget
+   test: add unit tests for match calculation
    ```
-3. **Always commit working code** (playable state)
+
+3. **PR Requirements:**
+   - `flutter analyze` - 0 errors
+   - `flutter test` - all passing
+   - Code review approved
 
 ---
 
-## Common Tasks & Solutions
+## Game Logic
 
-### Adding a New Game Mode
-
-1. Create new screen widget (e.g., `PenaltyRouletteScreen`)
-2. Add navigation button in `IntroScreen`
-3. Design game logic with similar structure to `GameScreen`:
-   - State management
-   - Touch handling
-   - Game loop (if needed)
-   - Result overlay
-4. Use M3 widgets (`FilledButton`) and `Theme.of(context).colorScheme` for colors
-5. Reuse `FadeInUp` animation with hybrid motion approach
-
-### Tweaking Game Difficulty
-
-**Easier:**
-- Increase `touchTolerance` (60 → 80)
-- Decrease `intensity` multiplier (2.0 → 1.5)
-- Reduce movement speed (multiply frequency values by 0.8)
-
-**Harder:**
-- Add sudden direction changes
-- Increase `gameDuration` (15 → 20 seconds)
-- Make targets smaller (`targetRadius: 45 → 35`)
-
-### Adding Haptic Patterns
-
-Available methods:
-- `HapticFeedback.lightImpact()` - subtle (e.g., heartbeat)
-- `HapticFeedback.mediumImpact()` - standard (e.g., button tap)
-- `HapticFeedback.heavyImpact()` - strong (e.g., game start/fail)
-- `HapticFeedback.vibrate()` - celebration (success state)
-
-**⚠️ Rule:** Test on physical device. Haptics don't work in simulator.
-
-### Handling Screen Sizes
-
-**Current approach:** Relative positioning via `MediaQuery.of(context).size`
-**Safe area:** Already handled with `SafeArea` widget in `IntroScreen`
-**Notch handling:** Implicit via Flutter's safe area
-
-**⚠️ Rule:** Test on both small (iPhone SE) and large (iPad) screens before release.
-
----
-
-## Known Issues & Limitations
-
-### Current Bugs
-None reported (MVP just completed)
-
-### Technical Debt
-1. **Hard-coded initial positions:** `targetA = Offset(100, 400)` should use screen dimensions
-2. **No state persistence:** Exiting game loses progress (acceptable for MVP)
-3. **Single-threaded physics:** Game loop blocks UI thread (acceptable at 60fps)
-
-### Platform-Specific Issues
-- **iOS:** Requires `Info.plist` permission for haptics (already added)
-- **Android:** May need `VIBRATE` permission check (TODO)
-
----
-
-## Communication Style & UX Copy
-
-### Voice & Tone
-- **Casual Korean slang:** "띠로리~", "천생연분!", "어머! 닿겠어!"
-- **B-grade sensibility:** Intentionally cheesy/kitsch
-- **No formality:** Never use 존댓말 (polite form)
-
-### Example Copy Patterns
-```
-✅ Good: "이 정도면 사귀어야 하는 거 아님?"
-❌ Bad: "축하드립니다. 게임을 완료하셨습니다."
-
-✅ Good: "손을 놓쳐버렸어요!"
-❌ Bad: "터치가 감지되지 않았습니다."
+### Sticky Fingers Physics
+```dart
+targetA = Offset(
+  centerX - 80 + sin(_time * 1.5) * 60 * intensity,
+  centerY + cos(_time * 2.1) * 100 * intensity,
+);
 ```
 
-**⚠️ Rule:** Keep the playful, slightly cringey vibe. This is a feature, not a bug.
+- Duration: 15 seconds
+- Target radius: 34px
+- Touch tolerance: 60px
+- Intensity: 1.0 + (progress * 2.0)
+
+### Soul Sync Logic
+- 5 questions from pool of 10
+- Tiered results: ≥80% "천생연분!", ≥50% "꽤 맞네?", <50% "이건 좀..."
 
 ---
 
-## Dependencies & Environment
+## Performance
 
-### Current `pubspec.yaml`
-```yaml
-dependencies:
-  flutter:
-    sdk: flutter
-  # No external packages yet (intentional)
+**Requirements:**
+- 60fps minimum (120fps on ProMotion)
+- Use `Ticker` for game loop
+- `CustomPainter.shouldRepaint` → `true`
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^4.0.0
-```
-
-**⚠️ Rule:** Only add dependencies when **absolutely necessary**. Prefer built-in Flutter APIs.
-
-### Planned Additions
-- `riverpod: ^2.x` - State management (when adding Mode B/C)
-- `firebase_core` - Backend integration
-- `share_plus` - Social sharing
-- `in_app_purchase` - Monetization
+**Optimization:**
+- ValueNotifier instead of setState in loops
+- RepaintBoundary for static elements
+- Lazy loading for content packs
 
 ---
 
-## AI Development Guidelines (For Claude)
+## Platform Configuration
 
-### When Working on This Project:
+### Android
+- Package: `com.prometheusp.somesome`
+- Min SDK: 21
+- VIBRATE permission: ✅ Added
 
-1. **Read first, code second:** Always check existing implementation before suggesting changes
-2. **Respect the vibe:** Maintain the playful, B-grade aesthetic
-3. **Test on device:** Remind user to test haptics/multi-touch on physical hardware
-4. **Ask before refactoring:** Don't break up `main.dart` unless user requests it
-5. **Korean OK:** Use Korean in comments for domain terms, English for technical concepts
-6. **Performance matters:** 60fps is non-negotiable for game feel
-
-### When User Requests Are Ambiguous:
-
-1. **Default to simplicity:** Don't over-engineer
-2. **Match existing patterns:** Use M3 widgets, `Theme.of(context).colorScheme`, FadeInUp
-3. **Preserve game feel:** Don't change physics without explicit ask
-
-### When Adding New Features:
-
-1. Confirm requirements first
-2. Show code diff for critical sections (game loop, physics)
-3. Warn about performance implications if adding heavy operations
-4. Suggest testing checklist
+### iOS
+- Bundle ID: `com.prometheusp.somesome`
+- Display Name: 썸썸
 
 ---
 
-## Quick Reference
+## Commands
 
-### File Locations
-- Main app: `main.dart` (all code)
-- README: `README.md` (Korean docs)
-- Assets: None yet (all using emojis)
-
-### Key Classes
-- `ThemeData` with M3 - Design system via `ColorScheme.fromSeed()`
-- `IntroScreen` - Landing page
-- `GameScreen` - Sticky Fingers game logic
-- `SoulSyncScreen` - Soul Sync quiz game
-- `GamePainter` - Canvas rendering
-- `FadeInUp` - Entrance animation (hybrid motion)
-
-### Build & Run
 ```bash
+# Development
 flutter pub get
 flutter run
-```
 
-### Useful Commands
-```bash
-dart format .                    # Format code
-flutter analyze                  # Lint check
-flutter build apk --release      # Android build
-flutter build ios --release      # iOS build
+# Quality
+dart format .
+flutter analyze
+flutter test
+
+# Build
+flutter build apk --release
+flutter build ios --release
 ```
 
 ---
 
-## Contact & Resources
+## UX Copy Style
 
-- **Design Reference:** Material Design 3 (m3.material.io), Duolingo (playful UX)
-- **Game Feel Reference:** Crossy Road, Monument Valley (haptic timing)
-- **Target Benchmark:** 60fps on iPhone 12, 120fps on iPhone 15 Pro
+**Voice:** Casual Korean slang, B-grade sensibility
+
+```
+✅ "이 정도면 사귀어야 하는 거 아님?"
+❌ "축하드립니다. 게임을 완료하셨습니다."
+```
 
 ---
 
-**Last Updated:** 2025-12-02
-**Document Version:** 2.0
-**Project Phase:** Soul Sync Complete, M3 Migration In Progress
-
-## Active Technologies
-- Dart 3.x / Flutter 3.x + Flutter SDK only (no external packages per Constitution) (001-soul-sync)
-- N/A (in-memory game state, hardcoded question list for MVP) (001-soul-sync)
-
-## Recent Changes
-- 001-soul-sync: Added Dart 3.x / Flutter 3.x + Flutter SDK only (no external packages per Constitution)
+**Last Updated:** 2025-12-19
+**Document Version:** 3.0
+**Project Phase:** Modular Architecture Complete
