@@ -42,11 +42,11 @@ class _IntroScreenState extends State<IntroScreen>
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          padding: const EdgeInsets.symmetric(horizontal: spaceLarge),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 60),
+              const SizedBox(height: spaceXxLarge + spaceSmall), // 60
               // M3 Style Header
               FadeInUp(
                 delay: 0,
@@ -55,7 +55,7 @@ class _IntroScreenState extends State<IntroScreen>
                   style: titleBig(cs).copyWith(fontSize: 34),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: spaceSmall), // 12
               FadeInUp(
                 delay: 200,
                 child: Text('진지함은 빼고,\n스킨십은 더하고!', style: bodyText(cs)),
@@ -123,7 +123,7 @@ class _IntroScreenState extends State<IntroScreen>
                   },
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: spaceSmall), // 12
               // T001: 이심전심 텔레파시 버튼
               FadeInUp(
                 delay: 500,
@@ -139,7 +139,7 @@ class _IntroScreenState extends State<IntroScreen>
                   },
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: spaceMedium), // 16 (was 20)
               FadeInUp(
                 delay: 600,
                 child: Center(
@@ -149,7 +149,7 @@ class _IntroScreenState extends State<IntroScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: spaceXLarge), // 32 (was 40)
             ],
           ),
         ),

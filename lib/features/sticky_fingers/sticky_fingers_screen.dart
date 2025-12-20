@@ -220,7 +220,12 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            padding: const EdgeInsets.fromLTRB(
+              spaceMedium,
+              spaceXSmall,
+              spaceMedium,
+              spaceMedium,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +239,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                     _analytics.log('settings_sensitivity_change', {'v': v});
                   },
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: spaceXSmall),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   title: Text('배터리 세이브 모드', style: bodyBig(Theme.of(context).colorScheme)),
@@ -246,8 +251,8 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                     _analytics.log('settings_battery_saver_change', {'v': v});
                   },
                 ),
-                const SizedBox(height: 8),
-                const SizedBox(height: 12),
+                const SizedBox(height: spaceXSmall),
+                const SizedBox(height: spaceSmall),
                 const Divider(),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -270,8 +275,8 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                   trailing: const Icon(Icons.open_in_new),
                   onTap: () => _openUrl(AppLinks.storeUrl),
                 ),
-                const SizedBox(height: 8),
-Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(context).colorScheme)),
+                const SizedBox(height: spaceXSmall),
+                Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(context).colorScheme)),
               ],
             ),
           ),
@@ -309,18 +314,18 @@ Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(c
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: spaceXSmall),
             ValueListenableBuilder<double>(
               valueListenable: _progress,
               builder: (context, v, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: spaceMedium),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(value: v),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: spaceSmall),
             Expanded(
               child: RepaintBoundary(
                 key: _shareKey,
@@ -390,14 +395,19 @@ Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(c
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: spaceSmall),
             ValueListenableBuilder<StickyGamePhase>(
               valueListenable: _phase,
               builder: (context, ph, _) {
                 final line = _resultLine();
                 if (ph == StickyGamePhase.playing || ph == StickyGamePhase.idle) {
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    padding: const EdgeInsets.fromLTRB(
+                      spaceMedium,
+                      0,
+                      spaceMedium,
+                      spaceMedium,
+                    ),
                     child: Text(
                       ph == StickyGamePhase.idle
                           ? '두 손가락을 캐릭터에 올리면 시작!'
@@ -410,7 +420,12 @@ Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(c
 
                 final success = ph == StickyGamePhase.success;
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  padding: const EdgeInsets.fromLTRB(
+                    spaceMedium,
+                    0,
+                    spaceMedium,
+                    spaceMedium,
+                  ),
                   child: RepaintBoundary(
                     key: _resultShareKey,
                     child: Column(
@@ -419,17 +434,17 @@ Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(c
                           success ? '성공!' : '실패!',
                           style: titleBig(cs),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: spaceXxSmall),
                         if (line.isNotEmpty)
                           Text(line, style: bodyBig(cs), textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: spaceSmall),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.only(bottom: spaceXSmall),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text('썸썸', style: bodySmall(cs)),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: spaceXSmall),
                               Text(_storeText, style: bodySmall(cs)),
                             ],
                           ),
@@ -442,7 +457,7 @@ Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(c
                                 child: const Text('다시하기'),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: spaceXSmall),
                             Expanded(
                               child: FilledButton.tonal(
                                 onPressed: _share,

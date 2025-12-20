@@ -4,29 +4,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/firebase/remote_config_service.dart';
 import '../../design_system/tds.dart';
 import '../../design_system/components/toss_button.dart';
 import '../../design_system/motion/fade_in_up.dart';
 
 class _SoulSyncLayout {
   static const double buttonSize = 80.0; // LR-002
-  static const double buttonSpacing = 40.0; // LR-003
+  static const double buttonSpacing = spaceXLarge; // LR-003, Was 40.0
   static const double dividerHeight = 2.0; // LR-005
 }
-
-// T004: 하드코딩된 질문 리스트
-const List<String> _soulSyncQuestions = [
-  '첫 데이트는 활동적인 게 좋다',
-  '연인 사이에 비밀은 없어야 한다',
-  '기념일은 꼭 챙겨야 한다',
-  '싸우면 먼저 연락해야 한다',
-  '서로의 핸드폰을 볼 수 있어야 한다',
-  '데이트 비용은 번갈아 내야 한다',
-  '같은 취미가 있어야 한다',
-  '자기 전에 통화해야 한다',
-  '친구들에게 연애 사실을 알려야 한다',
-  '여행은 둘이만 가야 한다',
-];
 
 class SoulSyncScreen extends StatefulWidget {
   const SoulSyncScreen({super.key});
@@ -37,7 +24,7 @@ class SoulSyncScreen extends StatefulWidget {
 
 class _SoulSyncScreenState extends State<SoulSyncScreen> {
   // T007: State variables
-  late List<String> _questions;
+  List<String>? _questions; // Nullable to represent loading state
   int _currentIndex = 0;
   Map<String, bool?> _currentAnswers = {'A': null, 'B': null};
   List<Map<String, bool>> _completedAnswers = [];
@@ -68,12 +55,16 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
 
   void _initGame() {
     _nudgeTimer?.cancel();
+
+    // Fetch questions from Remote Config
+    final allQuestions = RemoteConfigService.instance.soulSyncQuestions;
+
     // C1: Validate question pool has sufficient questions
     assert(
-      _soulSyncQuestions.length >= 5,
+      allQuestions.length >= 5,
       'Question pool must have at least 5 questions',
     );
-    final shuffled = List<String>.from(_soulSyncQuestions)..shuffle();
+    final shuffled = List<String>.from(allQuestions)..shuffle();
     _questions = shuffled.take(5).toList();
     _currentIndex = 0;
     _currentAnswers = {'A': null, 'B': null};
@@ -132,7 +123,16 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
       return _buildResultScreen();
     }
 
-    final currentQuestion = _questions[_currentIndex];
+    // Handle loading state
+    if (_questions == null) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    final currentQuestion = _questions![_currentIndex];
 
     final cs = Theme.of(context).colorScheme;
 
@@ -157,11 +157,11 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
             Container(
               height: _SoulSyncLayout.dividerHeight,
               color: cs.outlineVariant.withOpacity(0.3),
-              margin: const EdgeInsets.symmetric(horizontal: 24),
+              margin: const EdgeInsets.symmetric(horizontal: spaceLarge),
             ),
             // Progress indicator
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: spaceXSmall),
               child: Text(
                 '${_currentIndex + 1} / 5',
                 style: bodyText(cs).copyWith(color: cs.onSurfaceVariant),
@@ -238,13 +238,13 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
           child: Center(
             child: FadeInUp(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
+                padding: const EdgeInsets.symmetric(horizontal: spaceXLarge),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // T020: Emoji
                     Text(_resultEmoji, style: const TextStyle(fontSize: 80)),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: spaceMedium),
                     // T015: Result message
                     Text(
                       _resultMessage,
@@ -257,17 +257,16 @@ class _SoulSyncScreenState extends State<SoulSyncScreen> {
                             : cs.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: spaceMedium),
                     // Match count
                     Text('$_matches / 5 일치 ($_percent%)', style: bodyText(cs)),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: spaceXLarge),
                     // T018: 다시하기 버튼
                     TossButton(
                       text: '다시하기',
-                      color: cs.primary,
                       onTap: _restartGame,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: spaceSmall),
                     // T019: 홈으로 버튼
                     TossButton(
                       text: '홈으로',
@@ -306,7 +305,10 @@ class _PlayerArea extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: spaceLarge,
+        vertical: spaceMedium,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -316,7 +318,7 @@ class _PlayerArea extends StatelessWidget {
             textAlign: TextAlign.center,
             style: titleMedium(cs).copyWith(fontSize: 18),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: spaceLarge),
           // 대기 중이면 대기 메시지 표시
           if (isWaiting)
             Text('기다리는 중~', style: bodyText(cs).copyWith(color: cs.tertiary))

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../tds.dart';
+
 class TossButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
-  final Color color;
+  final Color? color; // Allow null for default brand color
   final IconData? icon;
   final double width;
 
@@ -11,7 +13,7 @@ class TossButton extends StatelessWidget {
     super.key,
     required this.text,
     required this.onTap,
-    required this.color,
+    this.color,
     this.icon,
     this.width = double.infinity,
   });
@@ -19,23 +21,26 @@ class TossButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final buttonColor = color ?? cs.primary;
+
+    final buttonStyle = FilledButton.styleFrom(
+      backgroundColor: buttonColor,
+      foregroundColor: cs.onPrimary,
+      padding: const EdgeInsets.symmetric(
+        horizontal: spaceLarge,
+        vertical: spaceMedium,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(spaceXxSmall), // 4.0
+      ),
+      textStyle: bodyBig(cs).copyWith(fontWeight: FontWeight.bold),
+    );
 
     if (icon != null) {
       return SizedBox(
         width: width,
-        height: 56,
         child: FilledButton.icon(
-          style: FilledButton.styleFrom(
-            backgroundColor: color,
-            foregroundColor: cs.onPrimary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          style: buttonStyle,
           onPressed: onTap,
           icon: Icon(icon!, size: 20),
           label: Text(text),
@@ -43,24 +48,12 @@ class TossButton extends StatelessWidget {
       );
     }
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: width,
-        height: 56,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+    return SizedBox(
+      width: width,
+      child: FilledButton(
+        style: buttonStyle,
+        onPressed: onTap,
+        child: Text(text),
       ),
     );
   }

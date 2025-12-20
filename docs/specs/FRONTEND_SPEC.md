@@ -11,12 +11,10 @@ status: Approved
 ### Design System (TDS)
 
 **Colors**:
-```dart
-background:    #17171C  // Dark base
-primaryBlue:   #0064FF  // Toss blue
-kitschPink:    #FF007F  // Game accent
-kitschYellow:  #FFD700  // Secondary accent
-```
+The application uses a Material Design 3 (M3) theme. The entire color palette is algorithmically generated from a single seed color.
+
+- **Seed Color Source**: Salesforce Lightning Design System
+- **Seed Color**: `#0176D3` (Salesforce Blue)
 
 **Typography**:
 ```dart
