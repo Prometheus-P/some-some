@@ -260,7 +260,7 @@ env/
 **/generated_plugin_registrant.dart
 .pub-preload-cache/
 .pub/
-pubspec.lock
+# pubspec.lock is tracked for reproducible builds (Flutter app)
 
 # Generated files
 **/doc/api/
