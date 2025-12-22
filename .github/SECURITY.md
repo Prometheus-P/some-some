@@ -27,7 +27,7 @@
    - 취약점이 수정될 때까지 비공개로 유지됩니다
 
 2. **이메일**
-   - 보안팀 이메일: security@example.com
+   - 보안팀 이메일: parkdavid31@gmail.com
    - 제목: [SECURITY] 썸썸 보안 취약점 리포트
    - GPG 키로 암호화 권장 (공개키는 하단 참조)
 
@@ -290,13 +290,13 @@ Phase 2 이후 정식 버그 바운티 프로그램을 시작할 예정입니다
 
 ## 📧 연락처
 
-- **보안팀 이메일**: security@example.com (설정 예정)
+- **보안팀 이메일**: parkdavid31@gmail.com
 - **GitHub Security**: [Create Security Advisory](https://github.com/Prometheus-P/some-some/security/advisories/new)
 - **일반 문의**: [GitHub Discussions](https://github.com/Prometheus-P/some-some/discussions)
 
 ## ⚖️ 법적 고지
 
-- 이 프로젝트는 교육 및 연구 목적입니다
+- 이 프로젝트는 독점 소프트웨어입니다 (Proprietary Software)
 - 권한 없는 침투 테스트는 금지됩니다
 - 책임감 있는 공개를 해주신 연구자는 법적 조치로부터 보호됩니다
 - 악의적인 공격이나 데이터 유출은 법적 조치가 취해질 수 있습니다
