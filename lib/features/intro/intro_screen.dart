@@ -7,7 +7,6 @@ import '../../design_system/tds.dart';
 import '../../design_system/components/toss_button.dart';
 import '../../design_system/motion/fade_in_up.dart';
 import '../sticky_fingers/sticky_fingers_screen.dart';
-import '../soul_sync/soul_sync_screen.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -42,11 +41,11 @@ class _IntroScreenState extends State<IntroScreen>
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: spaceLarge),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: spaceXxLarge + spaceSmall), // 60
+              const SizedBox(height: 60),
               // M3 Style Header
               FadeInUp(
                 delay: 0,
@@ -55,7 +54,7 @@ class _IntroScreenState extends State<IntroScreen>
                   style: titleBig(cs).copyWith(fontSize: 34),
                 ),
               ),
-              const SizedBox(height: spaceSmall), // 12
+              const SizedBox(height: 12),
               FadeInUp(
                 delay: 200,
                 child: Text('진지함은 빼고,\n스킨십은 더하고!', style: bodyText(cs)),
@@ -123,23 +122,7 @@ class _IntroScreenState extends State<IntroScreen>
                   },
                 ),
               ),
-              const SizedBox(height: spaceSmall), // 12
-              // T001: 이심전심 텔레파시 버튼
-              FadeInUp(
-                delay: 500,
-                child: TossButton(
-                  text: '이심전심 텔레파시',
-                  color: cs.primary,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SoulSyncScreen()),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: spaceMedium), // 16 (was 20)
+              const SizedBox(height: 32),
               FadeInUp(
                 delay: 600,
                 child: Center(
@@ -149,7 +132,7 @@ class _IntroScreenState extends State<IntroScreen>
                   ),
                 ),
               ),
-              const SizedBox(height: spaceXLarge), // 32 (was 40)
+              const SizedBox(height: 40),
             ],
           ),
         ),

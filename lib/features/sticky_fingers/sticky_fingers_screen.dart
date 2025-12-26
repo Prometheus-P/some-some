@@ -1,17 +1,9 @@
+import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/haptics/haptics.dart';
-import '../../core/app_links.dart';
-import '../../core/packs/pack.dart';
-import '../../core/packs/pack_loader.dart';
-import '../../core/share/share_service.dart';
-import '../../core/settings/settings_store.dart';
-import '../../core/telemetry/analytics.dart';
 import '../../design_system/tds.dart';
 
 enum StickyGamePhase { idle, playing, success, fail }
@@ -40,16 +32,15 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   final GlobalKey _shareKey = GlobalKey();
   final GlobalKey _resultShareKey = GlobalKey();
 
-  final SettingsStore _settings = SettingsStore();
-  final Analytics _analytics = DebugAnalytics();
+  // Grace period timer for accidental lifts
+  Timer? _graceTimer;
+  static const Duration _graceDuration = Duration(milliseconds: 200);
 
-  double _sensitivity = 0.25;
-  bool _batterySaver = false;
+  static const String _storeText = '@somesome.app';
 
-  static const String _storeText = AppLinks.storeText;
-
-  // Content pack
-  ContentPack? _pack;
+  // Hardcoded result messages (v1.0.0 MVP)
+  static const List<String> _successLines = ['천생연분!', '손맛 미쳤다', '이 정도면 커플 확정'];
+  static const List<String> _failLines = ['띠로리~', '아슬아슬했다', '다음 판엔 된다'];
 
   // Internal time
   double _time = 0.0;
@@ -62,33 +53,14 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   @override
   void initState() {
     super.initState();
-
-    _analytics.log('app_open', {'screen': 'sticky_fingers'});
-
-    // Load persisted settings
-    () async {
-      final s = await _settings.loadSensitivity();
-      final b = await _settings.loadBatterySaver();
-      if (!mounted) return;
-      setState(() {
-        _sensitivity = s;
-        _batterySaver = b;
-      });
-    }();
     _targetA = const Offset(120, 260);
     _targetB = const Offset(240, 260);
-
     _ticker = createTicker(_gameLoop);
-
-    // Load pack (non-blocking)
-    PackLoader.loadDefault().then((p) {
-      _analytics.log('pack_loaded', {'id': p.id, 'schema': p.schemaVersion});
-      if (mounted) setState(() => _pack = p);
-    });
   }
 
   @override
   void dispose() {
+    _graceTimer?.cancel();
     _ticker.dispose();
     _progress.dispose();
     _phase.dispose();
@@ -105,7 +77,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   }
 
   void _stop({required bool success}) {
-    _analytics.log(success ? 'finish_game' : 'fail_game', {'mode': 'sticky'});
+    _graceTimer?.cancel();
     _ticker.stop();
     _phase.value = success ? StickyGamePhase.success : StickyGamePhase.fail;
     if (success) {
@@ -116,12 +88,12 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   }
 
   void _reset() {
-    _analytics.log('reset_game');
+    _graceTimer?.cancel();
     _pointers.clear();
     _time = 0.0;
     _progress.value = 0.0;
     _phase.value = StickyGamePhase.idle;
-    setState(() {}); // once
+    setState(() {});
   }
 
   bool _isHoldingBoth() => _pointers.length >= 2;
@@ -169,11 +141,9 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
         _progress.value = (_progress.value - dt * 0.35).clamp(0.0, 1.0);
       }
     } else {
-      // if they stop holding, fail quickly
-      if (_progress.value > 0.08) {
-        _analytics.log('fail_game', {});
-                          _stop(success: false);
-      }
+      // Grace period handled by touch events, not game loop
+      // Progress decay only (no immediate fail from game loop)
+      _progress.value = (_progress.value - dt * 0.35).clamp(0.0, 1.0);
     }
 
     // Only repaint the canvas via ticker; UI is ValueListenable-driven
@@ -183,117 +153,16 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   }
 
   String _resultLine() {
-    final pack = _pack;
-    if (pack == null) return '';
     final rng = Random();
     if (_phase.value == StickyGamePhase.success) {
-      return pack.successLines[rng.nextInt(pack.successLines.length)];
+      return _successLines[rng.nextInt(_successLines.length)];
     }
     if (_phase.value == StickyGamePhase.fail) {
-      return pack.failLines[rng.nextInt(pack.failLines.length)];
+      return _failLines[rng.nextInt(_failLines.length)];
     }
     return '';
   }
 
-  Future<void> _share() async {
-    _analytics.log('share_open', {'phase': _phase.value.toString()});
-    final ctx = _resultShareKey.currentContext;
-    if (ctx == null) return;
-    final boundary = ctx.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary == null) return;
-
-    await ShareService.shareRepaintBoundary(
-      boundary: boundary,
-      text: '썸썸 결과: ${_resultLine()} — $_storeText',
-      pixelRatio: _batterySaver ? 2.0 : 3.0,
-    );
-
-    _analytics.log('share_success');
-  }
-
-
-  void _openSettings() {
-    _analytics.log('settings_open');
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              spaceMedium,
-              spaceXSmall,
-              spaceMedium,
-              spaceMedium,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('민감도(접촉 강도)', style: titleSmall(Theme.of(context).colorScheme)),
-                Slider(
-                  value: _sensitivity,
-                  onChanged: (v) async {
-                    setState(() => _sensitivity = v);
-                    await _settings.saveSensitivity(v);
-                    _analytics.log('settings_sensitivity_change', {'v': v});
-                  },
-                ),
-                const SizedBox(height: spaceXSmall),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('배터리 세이브 모드', style: bodyBig(Theme.of(context).colorScheme)),
-                  subtitle: Text('이펙트를 줄여 발열/배터리를 아낍니다', style: bodySmall(Theme.of(context).colorScheme)),
-                  value: _batterySaver,
-                  onChanged: (v) async {
-                    setState(() => _batterySaver = v);
-                    await _settings.saveBatterySaver(v);
-                    _analytics.log('settings_battery_saver_change', {'v': v});
-                  },
-                ),
-                const SizedBox(height: spaceXSmall),
-                const SizedBox(height: spaceSmall),
-                const Divider(),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('개인정보처리방침', style: bodyBig(Theme.of(context).colorScheme)),
-                  subtitle: Text(AppLinks.privacyPolicyUrl, style: bodySmall(Theme.of(context).colorScheme)),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => _openUrl(AppLinks.privacyPolicyUrl),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('고객지원', style: bodyBig(Theme.of(context).colorScheme)),
-                  subtitle: Text(AppLinks.supportUrl, style: bodySmall(Theme.of(context).colorScheme)),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => _openUrl(AppLinks.supportUrl),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: Text('스토어', style: bodyBig(Theme.of(context).colorScheme)),
-                  subtitle: Text(AppLinks.storeUrl, style: bodySmall(Theme.of(context).colorScheme)),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: () => _openUrl(AppLinks.storeUrl),
-                ),
-                const SizedBox(height: spaceXSmall),
-                Text('팁: 기본은 낮게. 원할 때만 올려.', style: bodySmall(Theme.of(context).colorScheme)),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _openUrl(String url) async {
-    final uri = Uri.parse(url);
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('링크를 열 수 없습니다')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,29 +172,22 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       appBar: AppBar(
         title: const Text('쫀드기 챌린지'),
         backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            tooltip: '설정',
-            icon: const Icon(Icons.tune_rounded),
-            onPressed: _openSettings,
-          ),
-        ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: spaceXSmall),
+            const SizedBox(height: 8),
             ValueListenableBuilder<double>(
               valueListenable: _progress,
               builder: (context, v, _) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: spaceMedium),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(999),
                   child: LinearProgressIndicator(value: v),
                 ),
               ),
             ),
-            const SizedBox(height: spaceSmall),
+            const SizedBox(height: 12),
             Expanded(
               child: RepaintBoundary(
                 key: _shareKey,
@@ -335,10 +197,13 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                       children: [
                         Listener(
                       onPointerDown: (e) {
+                        // Cancel any pending grace timer (finger returned)
+                        _graceTimer?.cancel();
+                        _graceTimer = null;
+
                         _pointers[e.pointer] = e.localPosition;
                         if (_phase.value == StickyGamePhase.idle &&
                             _pointers.length >= 2) {
-                          _analytics.log('start_game', {'mode': 'sticky'});
                           _start();
                         }
                         setState(() {});
@@ -349,14 +214,28 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                       onPointerUp: (e) {
                         _pointers.remove(e.pointer);
                         if (_phase.value == StickyGamePhase.playing) {
-                          _stop(success: false);
+                          // Start grace period instead of immediate fail
+                          _graceTimer?.cancel();
+                          _graceTimer = Timer(_graceDuration, () {
+                            if (_pointers.length < 2 &&
+                                _phase.value == StickyGamePhase.playing) {
+                              _stop(success: false);
+                            }
+                          });
                         }
                         setState(() {});
                       },
                       onPointerCancel: (e) {
                         _pointers.remove(e.pointer);
                         if (_phase.value == StickyGamePhase.playing) {
-                          _stop(success: false);
+                          // Start grace period for cancel events too
+                          _graceTimer?.cancel();
+                          _graceTimer = Timer(_graceDuration, () {
+                            if (_pointers.length < 2 &&
+                                _phase.value == StickyGamePhase.playing) {
+                              _stop(success: false);
+                            }
+                          });
                         }
                         setState(() {});
                       },
@@ -395,19 +274,14 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                 ),
               ),
             ),
-            const SizedBox(height: spaceSmall),
+            const SizedBox(height: 12),
             ValueListenableBuilder<StickyGamePhase>(
               valueListenable: _phase,
               builder: (context, ph, _) {
                 final line = _resultLine();
                 if (ph == StickyGamePhase.playing || ph == StickyGamePhase.idle) {
                   return Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      spaceMedium,
-                      0,
-                      spaceMedium,
-                      spaceMedium,
-                    ),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     child: Text(
                       ph == StickyGamePhase.idle
                           ? '두 손가락을 캐릭터에 올리면 시작!'
@@ -420,12 +294,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
 
                 final success = ph == StickyGamePhase.success;
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    spaceMedium,
-                    0,
-                    spaceMedium,
-                    spaceMedium,
-                  ),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: RepaintBoundary(
                     key: _resultShareKey,
                     child: Column(
@@ -434,17 +303,17 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                           success ? '성공!' : '실패!',
                           style: titleBig(cs),
                         ),
-                        const SizedBox(height: spaceXxSmall),
+                        const SizedBox(height: 6),
                         if (line.isNotEmpty)
                           Text(line, style: bodyBig(cs), textAlign: TextAlign.center),
-                        const SizedBox(height: spaceSmall),
+                        const SizedBox(height: 12),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: spaceXSmall),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text('썸썸', style: bodySmall(cs)),
-                              const SizedBox(width: spaceXSmall),
+                              const SizedBox(width: 8),
                               Text(_storeText, style: bodySmall(cs)),
                             ],
                           ),
@@ -457,11 +326,11 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                                 child: const Text('다시하기'),
                               ),
                             ),
-                            const SizedBox(width: spaceXSmall),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: FilledButton.tonal(
-                                onPressed: _share,
-                                child: const Text('공유하기'),
+                                onPressed: () => Navigator.of(context).maybePop(),
+                                child: const Text('나가기'),
                               ),
                             ),
                           ],

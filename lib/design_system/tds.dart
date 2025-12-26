@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 // -----------------------------------------------------------------------------
 
 // M3 Seed Color - kitschPink generates the entire tonal palette
-const Color _seedColor = Color(0xFF0176D3); // Salesforce Blue
+const Color _seedColor = Color(0xFFFF0099); // neonPink
 
 // 쫀득한 애니메이션 커브 (게임 피드백용 - M3 하이브리드 모션)
 const Curve kSpringCurve = Curves.elasticOut;
@@ -56,15 +56,3 @@ TextStyle bodySmall(ColorScheme cs) => TextStyle(
 
 /// Public seed color used across the app.
 const Color seedColor = _seedColor;
-
-// -----------------------------------------------------------------------------
-// 2. SPACING (Based on SLDS)
-// -----------------------------------------------------------------------------
-// https://www.lightningdesignsystem.com/tokens/design-tokens/space/
-const double spaceXxSmall = 4.0;
-const double spaceXSmall = 8.0;
-const double spaceSmall = 12.0;
-const double spaceMedium = 16.0;
-const double spaceLarge = 24.0;
-const double spaceXLarge = 32.0;
-const double spaceXxLarge = 48.0;
