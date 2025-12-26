@@ -2,7 +2,7 @@ name: some_some
 description: "썸썸 - 게임인 척하며 자연스럽게 손잡기"
 publish_to: 'none'
 
-version: 1.2.1+5
+version: 1.2.2+6
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
