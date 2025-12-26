@@ -27,11 +27,11 @@ class TossButton extends StatelessWidget {
       backgroundColor: buttonColor,
       foregroundColor: cs.onPrimary,
       padding: const EdgeInsets.symmetric(
-        horizontal: spaceLarge,
-        vertical: spaceMedium,
+        horizontal: 24.0,
+        vertical: 16.0,
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(spaceXxSmall), // 4.0
+        borderRadius: BorderRadius.circular(12.0),
       ),
       textStyle: bodyBig(cs).copyWith(fontWeight: FontWeight.bold),
     );
