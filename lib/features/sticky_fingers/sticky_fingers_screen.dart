@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../core/haptics/haptics.dart';
+import '../../core/settings/settings_service.dart';
+import '../../core/share/share_service.dart';
 import '../../core/sound/sound_service.dart';
 import '../../design_system/tds.dart';
 
@@ -44,6 +46,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
 
   // Sound & Celebration
   final SoundService _sound = SoundService();
+  final SettingsService _settings = SettingsService();
   late final ConfettiController _confettiController;
 
   static const String _storeText = '@somesome.app';
@@ -55,10 +58,10 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   // Internal time
   double _time = 0.0;
 
-  // Tunables
-  static const double _durationSec = 15.0;
+  // Tunables (from settings)
+  double get _durationSec => _settings.difficulty.duration;
+  double get _moveSpeed => _settings.difficulty.speed;
   static const double _targetRadius = 55.0; // v1.0.1: 34→55px for better touch tolerance
-  static const double _moveSpeed = 1.0; // scales the curve speed
 
   @override
   void initState() {
@@ -90,9 +93,11 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     _failureReason = null;
     _isGracePeriod.value = false;
     _ticker.start();
-    Haptics.heavy();
-    _sound.playStart();
-    _sound.startHeartbeat();
+    if (_settings.hapticEnabled) Haptics.heavy();
+    if (_settings.soundEnabled) {
+      _sound.playStart();
+      _sound.startHeartbeat();
+    }
   }
 
   void _stop({required bool success, String? reason}) {
@@ -105,13 +110,20 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       _failureReason = reason;
     }
     if (success) {
-      Haptics.vibrate();
-      _sound.playSuccess();
+      if (_settings.hapticEnabled) Haptics.vibrate();
+      if (_settings.soundEnabled) _sound.playSuccess();
       _confettiController.play();
     } else {
-      Haptics.heavy();
-      _sound.playFail();
+      if (_settings.hapticEnabled) Haptics.heavy();
+      if (_settings.soundEnabled) _sound.playFail();
     }
+  }
+
+  void _shareResult() {
+    final resultText = _phase.value == StickyGamePhase.success
+        ? '썸썸 쫀드기 챌린지 성공! 💕\n${_durationSec.toInt()}초 버텼어요!\n\n@somesome.app'
+        : '썸썸 쫀드기 챌린지 도전! 💪\n다음엔 성공할 거야!\n\n@somesome.app';
+    ShareService.shareWidget(_resultShareKey, text: resultText);
   }
 
   void _reset() {
@@ -348,7 +360,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                     child: Text(
                       ph == StickyGamePhase.idle
                           ? '두 손가락을 캐릭터에 올리면 시작!'
-                          : '15초 버티면 성공. 손 떼면 실패.',
+                          : '${_durationSec.toInt()}초 버티면 성공. 손 떼면 실패.',
                       style: titleSmall(cs),
                       textAlign: TextAlign.center,
                     ),
@@ -400,11 +412,16 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                             const SizedBox(width: 10),
                             Expanded(
                               child: FilledButton.tonal(
-                                onPressed: () => Navigator.of(context).maybePop(),
-                                child: const Text('나가기'),
+                                onPressed: _shareResult,
+                                child: const Text('공유하기'),
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).maybePop(),
+                          child: Text('나가기', style: bodySmall(cs)),
                         ),
                       ],
                     ),

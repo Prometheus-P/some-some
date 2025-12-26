@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../design_system/tds.dart';
 import '../../design_system/components/toss_button.dart';
 import '../../design_system/motion/fade_in_up.dart';
+import '../settings/settings_screen.dart';
 import '../sticky_fingers/sticky_fingers_screen.dart';
 import '../tutorial/tutorial_screen.dart';
 
@@ -72,14 +73,26 @@ class _IntroScreenState extends State<IntroScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Help button (shows tutorial again)
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  onPressed: _showTutorial,
-                  icon: Icon(Icons.help_outline, color: cs.onSurfaceVariant),
-                  tooltip: '도움말',
-                ),
+              // Top action buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: _showTutorial,
+                    icon: Icon(Icons.help_outline, color: cs.onSurfaceVariant),
+                    tooltip: '도움말',
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                      );
+                    },
+                    icon: Icon(Icons.settings_outlined, color: cs.onSurfaceVariant),
+                    tooltip: '설정',
+                  ),
+                ],
               ),
               const SizedBox(height: 20),
               // M3 Style Header
