@@ -14,11 +14,18 @@ import '../../core/sound/sound_service.dart';
 import '../../design_system/tds.dart';
 import '../../design_system/components/animated_background.dart';
 import '../../design_system/components/glass_button.dart';
+import '../couple_mode/couple_service.dart';
 
 enum StickyGamePhase { idle, playing, success, fail }
 
 class StickyFingersScreen extends StatefulWidget {
-  const StickyFingersScreen({super.key});
+  /// 연습 모드 (1인 플레이)
+  final bool isPracticeMode;
+
+  const StickyFingersScreen({
+    super.key,
+    this.isPracticeMode = false,
+  });
 
   @override
   State<StickyFingersScreen> createState() => _StickyFingersScreenState();
@@ -62,6 +69,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   // Sound & Celebration
   final SoundService _sound = SoundService();
   final SettingsService _settings = SettingsService();
+  final CoupleService _coupleService = CoupleService();
   late final ConfettiController _confettiController;
 
   // Success animation
@@ -90,6 +98,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
     _sound.init();
     _loadBestTime();
+    _coupleService.initialize();
   }
 
   Future<void> _loadBestTime() async {
@@ -159,6 +168,11 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       if (_settings.hapticEnabled) Haptics.vibrate();
       if (_settings.soundEnabled) _sound.playSuccess();
       _confettiController.play();
+
+      // Track play count (not in practice mode)
+      if (!widget.isPracticeMode) {
+        _coupleService.incrementPlayCount();
+      }
     } else {
       if (_settings.hapticEnabled) Haptics.heavy();
       if (_settings.soundEnabled) _sound.playFail();
@@ -198,7 +212,11 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     });
   }
 
-  bool _isHoldingBoth() => _pointers.length >= 2;
+  bool _isHoldingBoth() => widget.isPracticeMode
+      ? _pointers.isNotEmpty
+      : _pointers.length >= 2;
+
+  int get _requiredPointers => widget.isPracticeMode ? 1 : 2;
 
   void _gameLoop(Duration elapsed) {
     if (_phase.value != StickyGamePhase.playing) return;
@@ -220,14 +238,23 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
 
     if (_isHoldingBoth()) {
       final points = _pointers.values.toList();
-      final p1 = points[0];
-      final p2 = points[1];
+      bool ok;
 
-      final okA = (p1 - _targetA).distance <= _targetRadius;
-      final okB = (p2 - _targetB).distance <= _targetRadius;
-      final okSwapA = (p2 - _targetA).distance <= _targetRadius;
-      final okSwapB = (p1 - _targetB).distance <= _targetRadius;
-      final ok = (okA && okB) || (okSwapA && okSwapB);
+      if (widget.isPracticeMode) {
+        // Practice mode: only check target A (bear)
+        final p1 = points[0];
+        ok = (p1 - _targetA).distance <= _targetRadius;
+      } else {
+        // Normal mode: check both targets
+        final p1 = points[0];
+        final p2 = points[1];
+
+        final okA = (p1 - _targetA).distance <= _targetRadius;
+        final okB = (p2 - _targetB).distance <= _targetRadius;
+        final okSwapA = (p2 - _targetA).distance <= _targetRadius;
+        final okSwapB = (p1 - _targetB).distance <= _targetRadius;
+        ok = (okA && okB) || (okSwapA && okSwapB);
+      }
 
       if (ok) {
         final next = (_progress.value + dt / _durationSec).clamp(0.0, 1.0);
@@ -273,7 +300,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
-          '쫀드기 챌린지',
+          widget.isPracticeMode ? '연습 모드' : '쫀드기 챌린지',
           style: titleSmall(cs),
         ),
         backgroundColor: Colors.transparent,
@@ -402,7 +429,8 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                 _graceTimer = null;
                 _isGracePeriod.value = false;
                 _pointers[e.pointer] = e.localPosition;
-                if (_phase.value == StickyGamePhase.idle && _pointers.length >= 2) {
+                if (_phase.value == StickyGamePhase.idle &&
+                    _pointers.length >= _requiredPointers) {
                   _start();
                 }
                 setState(() {});
@@ -423,6 +451,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
                   primaryColor: cs.primary,
                   secondaryColor: cs.secondary,
                   tertiaryColor: cs.tertiary,
+                  isPracticeMode: widget.isPracticeMode,
                 ),
                 child: const SizedBox.expand(),
               ),
@@ -460,8 +489,10 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     final liftedPos = _pointers[e.pointer];
     _pointers.remove(e.pointer);
     if (_phase.value == StickyGamePhase.playing) {
-      String liftReason = '손가락이 떨어졌어요';
-      if (liftedPos != null) {
+      String liftReason = widget.isPracticeMode
+          ? '손가락이 떨어졌어요'
+          : '손가락이 떨어졌어요';
+      if (liftedPos != null && !widget.isPracticeMode) {
         final screenWidth = MediaQuery.of(context).size.width;
         liftReason = liftedPos.dx < screenWidth / 2
             ? '왼쪽 손가락이 떨어졌어요'
@@ -470,7 +501,8 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       _graceTimer?.cancel();
       _isGracePeriod.value = true;
       _graceTimer = Timer(_graceDuration, () {
-        if (_pointers.length < 2 && _phase.value == StickyGamePhase.playing) {
+        if (_pointers.length < _requiredPointers &&
+            _phase.value == StickyGamePhase.playing) {
           _stop(success: false, reason: liftReason);
         }
       });
@@ -650,8 +682,12 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
               ),
               child: Text(
                 ph == StickyGamePhase.idle
-                    ? '두 손가락을 캐릭터에 올리면 시작!'
-                    : '${_durationSec.toInt()}초 버티면 성공. 손 떼면 실패.',
+                    ? widget.isPracticeMode
+                        ? '곰 캐릭터에 손가락을 올리면 시작!'
+                        : '두 손가락을 캐릭터에 올리면 시작!'
+                    : widget.isPracticeMode
+                        ? '${_durationSec.toInt()}초 버티면 성공! (연습 모드)'
+                        : '${_durationSec.toInt()}초 버티면 성공. 손 떼면 실패.',
                 style: bodyText(cs),
                 textAlign: TextAlign.center,
               ),
@@ -810,6 +846,7 @@ class GamePainter extends CustomPainter {
   final Color primaryColor;
   final Color secondaryColor;
   final Color tertiaryColor;
+  final bool isPracticeMode;
 
   GamePainter({
     Listenable? repaint,
@@ -821,6 +858,7 @@ class GamePainter extends CustomPainter {
     required this.primaryColor,
     required this.secondaryColor,
     required this.tertiaryColor,
+    this.isPracticeMode = false,
   }) : super(repaint: repaint);
 
   @override
@@ -855,7 +893,9 @@ class GamePainter extends CustomPainter {
 
     // Enhanced Characters
     _drawCharacter(canvas, targetA, '🐻', secondaryColor, progress);
-    _drawCharacter(canvas, targetB, '🐰', primaryColor, progress);
+    if (!isPracticeMode) {
+      _drawCharacter(canvas, targetB, '🐰', primaryColor, progress);
+    }
 
     // Touch points with pulse effect
     pointers.forEach((id, pos) {

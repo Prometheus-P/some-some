@@ -12,6 +12,8 @@ import '../../design_system/components/glow_card.dart';
 import '../settings/settings_screen.dart';
 import '../sticky_fingers/sticky_fingers_screen.dart';
 import '../soul_sync/soul_sync_screen.dart';
+import '../penalty_roulette/penalty_roulette_screen.dart';
+import '../couple_mode/couple_mode_screen.dart';
 import '../tutorial/tutorial_screen.dart';
 
 class IntroScreen extends StatefulWidget {
@@ -81,6 +83,18 @@ class _IntroScreenState extends State<IntroScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
+                    _buildGlassIconButton(
+                      icon: Icons.favorite_rounded,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CoupleModeScreen()),
+                        );
+                      },
+                      tooltip: '우리의 기록',
+                    ),
+                    const SizedBox(width: 8),
                     _buildGlassIconButton(
                       icon: Icons.help_outline,
                       onTap: _showTutorial,
@@ -248,6 +262,65 @@ class _IntroScreenState extends State<IntroScreen>
                                 builder: (_) => const SoulSyncScreen()),
                           );
                         },
+                      ),
+                      const SizedBox(height: 12),
+                      // Penalty Roulette Button
+                      GlassButton(
+                        text: '복불복 룰렛',
+                        glowColor: cs.tertiary,
+                        icon: Icons.casino_rounded,
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => const PenaltyRouletteScreen()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Practice Mode Button (smaller, subtle)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  const StickyFingersScreen(isPracticeMode: true),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: cs.outline.withValues(alpha: 0.2),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.person_rounded,
+                                size: 18,
+                                color: cs.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '혼자 연습해보기',
+                                style: bodySmall(cs).copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),

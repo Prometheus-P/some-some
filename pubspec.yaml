@@ -2,7 +2,7 @@ name: some_some
 description: "썸썸 - 게임인 척하며 자연스럽게 손잡기"
 publish_to: 'none'
 
-version: 1.5.2+14
+version: 2.0.0+19
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -10,8 +10,12 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Deep links
+  app_links: ^6.3.3
   audioplayers: ^6.5.1
   confetti: ^0.8.0
+  # In-app purchase
+  in_app_purchase: ^3.2.0
   shared_preferences: ^2.5.4
   share_plus: ^12.0.1
   path_provider: ^2.1.5

@@ -5,11 +5,17 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/deep_links/deep_link_service.dart';
 import '../../core/haptics/haptics.dart';
+import '../../core/packs/content_pack.dart';
+import '../../core/packs/pack_loader.dart';
 import '../../core/settings/settings_service.dart';
+import '../../core/share/share_card_builder.dart';
+import '../../core/share/share_service.dart';
 import '../../design_system/tds.dart';
 import '../../design_system/components/animated_background.dart';
 import '../../design_system/components/glass_button.dart';
+import '../couple_mode/couple_service.dart';
 
 /// 이심전심 텔레파시 (Soul Sync) - 궁합 테스트 게임
 class SoulSyncScreen extends StatefulWidget {
@@ -33,27 +39,20 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
   final List<bool> _playerBAnswers = [];
   int _matchCount = 0;
 
-  // Questions pool (hardcoded MVP)
-  static const List<String> _allQuestions = [
-    '여행 갈 때 계획을 세운다',
-    '잠들기 전 휴대폰을 본다',
-    '아침형 인간이다',
-    '단 음식을 좋아한다',
-    '혼자 있는 시간이 필요하다',
-    '결정을 빠르게 내린다',
-    '새로운 것을 시도하는 게 좋다',
-    '감정 표현을 잘 한다',
-    '정리정돈을 잘 한다',
-    '운동을 즐긴다',
-  ];
-
-  late List<String> _selectedQuestions;
+  // Questions from pack system
+  SoulSyncPack? _currentPack;
+  List<SoulSyncQuestion> _selectedQuestions = [];
+  bool _isInitialized = false;
   static const int _questionCount = 5;
 
   // Settings & celebration
   final SettingsService _settings = SettingsService();
+  final CoupleService _coupleService = CoupleService();
   late final ConfettiController _confettiController;
   late final AnimationController _pulseController;
+
+  // Share
+  final GlobalKey _resultShareKey = GlobalKey();
 
   @override
   void initState() {
@@ -64,12 +63,21 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+    _coupleService.initialize();
+    _initializePacks();
+  }
+
+  Future<void> _initializePacks() async {
+    await PackLoader.instance.initialize();
+    _currentPack = PackLoader.instance.defaultSoulSyncPack;
     _shuffleQuestions();
+    _isInitialized = true;
+    if (mounted) setState(() {});
   }
 
   void _shuffleQuestions() {
-    final shuffled = List<String>.from(_allQuestions)..shuffle();
-    _selectedQuestions = shuffled.take(_questionCount).toList();
+    if (_currentPack == null) return;
+    _selectedQuestions = _currentPack!.getRandomQuestions(_questionCount);
   }
 
   @override
@@ -136,6 +144,9 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
   void _showResult() {
     _phase.value = SoulSyncPhase.result;
 
+    // Track play count for couple mode
+    _coupleService.incrementPlayCount();
+
     final percent = (_matchCount / _questionCount * 100).round();
     if (percent >= 80) {
       if (_settings.hapticEnabled) Haptics.vibrate();
@@ -168,9 +179,50 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
     return cs.onSurfaceVariant;
   }
 
+  void _shareResult() {
+    final percent = (_matchCount / _questionCount * 100).round();
+    final message = _getResultMessage();
+    final deepLink = DeepLinkService.createShareUrl(DeepLinkType.soulSync);
+
+    final shareText = ShareCardUtils.getShareText(
+      type: ShareCardType.soulSync,
+      title: message,
+      percent: percent,
+      extraInfo: '$_matchCount / $_questionCount 일치',
+    );
+
+    final fullShareText = '$shareText\n$deepLink';
+    ShareService.shareWidget(_resultShareKey, text: fullShareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+
+    // Loading state while packs initialize
+    if (!_isInitialized) {
+      return Scaffold(
+        body: MeshGradientBackground(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('💕', style: TextStyle(fontSize: 48)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: cs.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       body: MeshGradientBackground(
@@ -388,7 +440,10 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
     return ValueListenableBuilder<int>(
       valueListenable: _currentQuestion,
       builder: (context, qIndex, _) {
-        final question = _selectedQuestions[qIndex];
+        if (qIndex >= _selectedQuestions.length) {
+          return const SizedBox.shrink();
+        }
+        final question = _selectedQuestions[qIndex].question;
         final answerNotifier = isPlayerA ? _playerAAnswer : _playerBAnswer;
 
         return ValueListenableBuilder<bool?>(
@@ -631,44 +686,55 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
                     color: Colors.white.withValues(alpha: 0.3),
                   ),
               const SizedBox(height: 24),
-              // Score card
-              ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      color: cs.surface.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(20),
-                      border:
-                          Border.all(color: cs.outline.withValues(alpha: 0.2)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: resultColor.withValues(alpha: 0.3),
-                          blurRadius: 30,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          '$_matchCount / $_questionCount 일치',
-                          style: titleMedium(cs),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$percent%',
-                          style: titleBig(cs).copyWith(
-                            fontSize: 48,
-                            color: resultColor,
+              // Score card (with RepaintBoundary for sharing)
+              RepaintBoundary(
+                key: _resultShareKey,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                    child: Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: cs.surface.withValues(alpha: 0.8),
+                        borderRadius: BorderRadius.circular(20),
+                        border:
+                            Border.all(color: cs.outline.withValues(alpha: 0.2)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: resultColor.withValues(alpha: 0.3),
+                            blurRadius: 30,
+                            spreadRadius: 5,
                           ),
-                        ),
-                        const SizedBox(height: 16),
-                        // Answer comparison
-                        _buildAnswerComparison(cs),
-                      ],
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '$_matchCount / $_questionCount 일치',
+                            style: titleMedium(cs),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$percent%',
+                            style: titleBig(cs).copyWith(
+                              fontSize: 48,
+                              color: resultColor,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Answer comparison
+                          _buildAnswerComparison(cs),
+                          const SizedBox(height: 12),
+                          // Branding for share
+                          Text(
+                            '@somesome.app',
+                            style: bodySmall(cs).copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -690,10 +756,10 @@ class _SoulSyncScreenState extends State<SoulSyncScreen>
                   const SizedBox(width: 12),
                   Expanded(
                     child: GlassButton(
-                      text: '홈으로',
-                      icon: Icons.home_rounded,
+                      text: '공유하기',
+                      icon: Icons.share_rounded,
                       glowColor: cs.secondary,
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: _shareResult,
                     ),
                   ),
                 ],
