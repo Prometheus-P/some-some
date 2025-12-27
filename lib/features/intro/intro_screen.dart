@@ -2,11 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../design_system/tds.dart';
-import '../../design_system/components/toss_button.dart';
-import '../../design_system/motion/fade_in_up.dart';
+import '../../design_system/components/glass_button.dart';
+import '../../design_system/components/animated_background.dart';
+import '../../design_system/components/glow_card.dart';
 import '../settings/settings_screen.dart';
 import '../sticky_fingers/sticky_fingers_screen.dart';
 import '../tutorial/tutorial_screen.dart';
@@ -67,129 +69,254 @@ class _IntroScreenState extends State<IntroScreen>
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top action buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  IconButton(
-                    onPressed: _showTutorial,
-                    icon: Icon(Icons.help_outline, color: cs.onSurfaceVariant),
-                    tooltip: '도움말',
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                      );
-                    },
-                    icon: Icon(Icons.settings_outlined, color: cs.onSurfaceVariant),
-                    tooltip: '설정',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // M3 Style Header
-              FadeInUp(
-                delay: 0,
-                child: Text(
+      body: MeshGradientBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top action buttons with glass effect
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _buildGlassIconButton(
+                      icon: Icons.help_outline,
+                      onTap: _showTutorial,
+                      tooltip: '도움말',
+                    ),
+                    const SizedBox(width: 8),
+                    _buildGlassIconButton(
+                      icon: Icons.settings_outlined,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsScreen()),
+                        );
+                      },
+                      tooltip: '설정',
+                    ),
+                  ],
+                )
+                    .animate()
+                    .fadeIn(duration: 600.ms)
+                    .slideY(begin: -0.3, curve: Curves.easeOut),
+
+                const SizedBox(height: 20),
+
+                // Animated Title with shimmer
+                Text(
                   '너랑 나랑\n손끝 시그널',
                   style: titleBig(cs).copyWith(fontSize: 34),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FadeInUp(
-                delay: 200,
-                child: Text('진지함은 빼고,\n스킨십은 더하고!', style: bodyText(cs)),
-              ),
+                )
+                    .animate()
+                    .fadeIn(duration: 800.ms, delay: 200.ms)
+                    .slideX(begin: -0.2, curve: Curves.easeOut)
+                    .shimmer(
+                      delay: 1000.ms,
+                      duration: 1800.ms,
+                      color: cs.primary.withValues(alpha: 0.3),
+                    ),
 
-              const Spacer(),
+                const SizedBox(height: 12),
 
-              // Animated Graphic Area
-              Center(
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Transform.translate(
-                          offset: Offset(
-                            sin(_controller.value * 2 * pi) * 20,
-                            0,
-                          ),
-                          child: Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: cs.secondary.withOpacity(0.2),
-                              shape: BoxShape.circle,
+                Text('진지함은 빼고,\n스킨십은 더하고!', style: bodyText(cs))
+                    .animate()
+                    .fadeIn(duration: 800.ms, delay: 400.ms)
+                    .slideX(begin: -0.2, curve: Curves.easeOut),
+
+                const Spacer(),
+
+                // Animated Graphic Area with glow effect
+                Center(
+                  child: FloatWrapper(
+                    distance: 15,
+                    duration: const Duration(seconds: 3),
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // Glow rings
+                            Transform.translate(
+                              offset: Offset(
+                                sin(_controller.value * 2 * pi) * 25,
+                                0,
+                              ),
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      cs.secondary.withValues(alpha: 0.4),
+                                      cs.secondary.withValues(alpha: 0.1),
+                                      cs.secondary.withValues(alpha: 0.0),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: cs.secondary.withValues(alpha: 0.3),
+                                      blurRadius: 30,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        Transform.translate(
-                          offset: Offset(
-                            -sin(_controller.value * 2 * pi) * 20,
-                            0,
-                          ),
-                          child: Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: cs.primary.withOpacity(0.2),
-                              shape: BoxShape.circle,
+                            Transform.translate(
+                              offset: Offset(
+                                -sin(_controller.value * 2 * pi) * 25,
+                                0,
+                              ),
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      cs.primary.withValues(alpha: 0.4),
+                                      cs.primary.withValues(alpha: 0.1),
+                                      cs.primary.withValues(alpha: 0.0),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: cs.primary.withValues(alpha: 0.3),
+                                      blurRadius: 30,
+                                      spreadRadius: 5,
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                        const Text('💕', style: TextStyle(fontSize: 80)),
-                      ],
-                    );
-                  },
-                ),
-              ),
-
-              const Spacer(),
-
-              // M3 Style Button - 쫀드기 챌린지
-              FadeInUp(
-                delay: 400,
-                child: TossButton(
-                  text: '쫀드기 챌린지 시작하기',
-                  color: cs.secondary,
-                  onTap: () {
-                    HapticFeedback.mediumImpact();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const StickyFingersScreen()),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 32),
-              FadeInUp(
-                delay: 600,
-                child: Center(
-                  child: Text(
-                    '술자리 / 카페 / 썸 탈때 추천',
-                    style: bodyText(cs).copyWith(fontSize: 12),
+                            // Heart emoji with pulse
+                            const Text('💕', style: TextStyle(fontSize: 80))
+                                .animate(onPlay: (c) => c.repeat(reverse: true))
+                                .scale(
+                                  begin: const Offset(1.0, 1.0),
+                                  end: const Offset(1.1, 1.1),
+                                  duration: const Duration(milliseconds: 1500),
+                                  curve: Curves.easeInOut,
+                                ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
+                )
+                    .animate()
+                    .fadeIn(duration: 1000.ms, delay: 600.ms)
+                    .scale(begin: const Offset(0.8, 0.8)),
+
+                const Spacer(),
+
+                // Glass Button with glow
+                Center(
+                  child: GlassButton(
+                    text: '쫀드기 챌린지 시작하기',
+                    glowColor: cs.primary,
+                    icon: Icons.play_arrow_rounded,
+                    onTap: () {
+                      HapticFeedback.mediumImpact();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const StickyFingersScreen()),
+                      );
+                    },
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 800.ms, delay: 800.ms)
+                    .slideY(begin: 0.3, curve: Curves.easeOut),
+
+                const SizedBox(height: 24),
+
+                // Tagline with shimmer
+                Center(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: cs.outline.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🍻', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '술자리',
+                          style: bodySmall(cs),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('☕', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '카페',
+                          style: bodySmall(cs),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('💕', style: TextStyle(fontSize: 14)),
+                        const SizedBox(width: 6),
+                        Text(
+                          '썸 탈때',
+                          style: bodySmall(cs),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    .animate()
+                    .fadeIn(duration: 800.ms, delay: 1000.ms)
+                    .slideY(begin: 0.2),
+
+                const SizedBox(height: 40),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassIconButton({
+    required IconData icon,
+    required VoidCallback onTap,
+    required String tooltip,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: cs.outline.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: cs.onSurfaceVariant,
+            size: 22,
           ),
         ),
       ),
     );
   }
 }
-
-// -----------------------------------------------------------------------------
-// 4. GAME SCREEN (The Logic)
-// -----------------------------------------------------------------------------
