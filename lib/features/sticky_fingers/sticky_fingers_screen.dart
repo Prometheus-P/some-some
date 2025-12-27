@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/haptics/haptics.dart';
@@ -10,6 +12,8 @@ import '../../core/settings/settings_service.dart';
 import '../../core/share/share_service.dart';
 import '../../core/sound/sound_service.dart';
 import '../../design_system/tds.dart';
+import '../../design_system/components/animated_background.dart';
+import '../../design_system/components/glass_button.dart';
 
 enum StickyGamePhase { idle, playing, success, fail }
 
@@ -75,7 +79,7 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   // Tunables (from settings)
   double get _durationSec => _settings.difficulty.duration;
   double get _moveSpeed => _settings.difficulty.speed;
-  static const double _targetRadius = 55.0; // v1.0.1: 34→55px for better touch tolerance
+  static const double _targetRadius = 55.0;
 
   @override
   void initState() {
@@ -145,17 +149,13 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       _failureReason = reason;
     }
     if (success) {
-      // Check for new record
       final currentTime = _durationSec;
       if (_bestTime == null || currentTime > _bestTime!) {
         _isNewRecord = true;
         _bestTime = currentTime;
         _saveBestTime(currentTime);
       }
-
-      // Trigger success animation
       _showSuccessAnimation.value = true;
-
       if (_settings.hapticEnabled) Haptics.vibrate();
       if (_settings.soundEnabled) _sound.playSuccess();
       _confettiController.play();
@@ -191,7 +191,6 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   void _showMilestone(String text) {
     _milestoneText.value = text;
     if (_settings.hapticEnabled) Haptics.medium();
-    // Auto-hide after 800ms
     Future.delayed(const Duration(milliseconds: 800), () {
       if (_milestoneText.value == text) {
         _milestoneText.value = null;
@@ -204,11 +203,9 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
   void _gameLoop(Duration elapsed) {
     if (_phase.value != StickyGamePhase.playing) return;
 
-    // Drive motion
     final dt = 1 / 60.0;
     _time += dt;
 
-    // Infinity (8) curve with phase shift to make them cross
     final t = _time * _moveSpeed;
     final cx = MediaQuery.of(context).size.width / 2;
     final cy = MediaQuery.of(context).size.height * 0.40;
@@ -221,7 +218,6 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     _targetA = Offset(aX, aY);
     _targetB = Offset(bX, bY);
 
-    // Update progress only if both are held and within radius
     if (_isHoldingBoth()) {
       final points = _pointers.values.toList();
       final p1 = points[0];
@@ -234,12 +230,10 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
       final ok = (okA && okB) || (okSwapA && okSwapB);
 
       if (ok) {
-        final prev = _progress.value;
-        final next = (prev + dt / _durationSec).clamp(0.0, 1.0);
+        final next = (_progress.value + dt / _durationSec).clamp(0.0, 1.0);
         _progress.value = next;
-        _sound.setHeartbeatSpeed(next); // 진행률에 따라 심장박동 속도 증가
+        _sound.setHeartbeatSpeed(next);
 
-        // Milestone feedback
         if (!_reached50 && next >= 0.5) {
           _reached50 = true;
           _showMilestone('반이다! 💪');
@@ -253,19 +247,11 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
           _stop(success: true);
         }
       } else {
-        // decay a bit (prevents "stuck" progress)
         _progress.value = (_progress.value - dt * 0.35).clamp(0.0, 1.0);
       }
     } else {
-      // Grace period handled by touch events, not game loop
-      // Progress decay only (no immediate fail from game loop)
       _progress.value = (_progress.value - dt * 0.35).clamp(0.0, 1.0);
     }
-
-    // Only repaint the canvas via ticker; UI is ValueListenable-driven
-    // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
-    // (Ticker triggers CustomPainter repaint through Listenable)
-    // no setState per-frame; painter repaints via ticker & UI uses ValueNotifiers
   }
 
   String _resultLine() {
@@ -279,392 +265,538 @@ class _StickyFingersScreenState extends State<StickyFingersScreen>
     return '';
   }
 
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('쫀드기 챌린지'),
+        title: Text(
+          '쫀드기 챌린지',
+          style: titleSmall(cs),
+        ),
         backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: _buildGlassBackButton(cs),
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            ValueListenableBuilder<double>(
-              valueListenable: _progress,
-              builder: (context, v, _) => ValueListenableBuilder<bool>(
-                valueListenable: _isGracePeriod,
-                builder: (context, isGrace, _) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: v,
-                      backgroundColor: isGrace
-                          ? Colors.amber.withOpacity(0.3)
-                          : null,
-                      color: isGrace ? Colors.amber : null,
-                    ),
-                  ),
+      body: MeshGradientBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              // Animated Glow Progress Bar
+              _buildGlowProgressBar(cs),
+              const SizedBox(height: 12),
+              // Game Area
+              Expanded(
+                child: RepaintBoundary(
+                  key: _shareKey,
+                  child: _buildGameArea(cs),
                 ),
               ),
+              const SizedBox(height: 12),
+              // Bottom Section
+              _buildBottomSection(cs),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGlassBackButton(ColorScheme cs) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).maybePop(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: cs.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: cs.outline.withValues(alpha: 0.2),
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: RepaintBoundary(
-                key: _shareKey,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Stack(
-                      children: [
-                        Listener(
-                      onPointerDown: (e) {
-                        // Cancel any pending grace timer (finger returned)
-                        _graceTimer?.cancel();
-                        _graceTimer = null;
-                        _isGracePeriod.value = false;
+          ),
+          child: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: cs.onSurface,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
 
-                        _pointers[e.pointer] = e.localPosition;
-                        if (_phase.value == StickyGamePhase.idle &&
-                            _pointers.length >= 2) {
-                          _start();
-                        }
-                        setState(() {});
-                      },
-                      onPointerMove: (e) {
-                        _pointers[e.pointer] = e.localPosition;
-                      },
-                      onPointerUp: (e) {
-                        final liftedPos = _pointers[e.pointer];
-                        _pointers.remove(e.pointer);
-                        if (_phase.value == StickyGamePhase.playing) {
-                          // Determine which side lifted (for failure reason)
-                          String liftReason = '손가락이 떨어졌어요';
-                          if (liftedPos != null) {
-                            final screenWidth = MediaQuery.of(context).size.width;
-                            liftReason = liftedPos.dx < screenWidth / 2
-                                ? '왼쪽 손가락이 떨어졌어요'
-                                : '오른쪽 손가락이 떨어졌어요';
-                          }
-
-                          // Start grace period instead of immediate fail
-                          _graceTimer?.cancel();
-                          _isGracePeriod.value = true;
-                          _graceTimer = Timer(_graceDuration, () {
-                            if (_pointers.length < 2 &&
-                                _phase.value == StickyGamePhase.playing) {
-                              _stop(success: false, reason: liftReason);
-                            }
-                          });
-                        }
-                        setState(() {});
-                      },
-                      onPointerCancel: (e) {
-                        final liftedPos = _pointers[e.pointer];
-                        _pointers.remove(e.pointer);
-                        if (_phase.value == StickyGamePhase.playing) {
-                          String liftReason = '손가락이 떨어졌어요';
-                          if (liftedPos != null) {
-                            final screenWidth = MediaQuery.of(context).size.width;
-                            liftReason = liftedPos.dx < screenWidth / 2
-                                ? '왼쪽 손가락이 떨어졌어요'
-                                : '오른쪽 손가락이 떨어졌어요';
-                          }
-
-                          // Start grace period for cancel events too
-                          _graceTimer?.cancel();
-                          _isGracePeriod.value = true;
-                          _graceTimer = Timer(_graceDuration, () {
-                            if (_pointers.length < 2 &&
-                                _phase.value == StickyGamePhase.playing) {
-                              _stop(success: false, reason: liftReason);
-                            }
-                          });
-                        }
-                        setState(() {});
-                      },
-                      child: CustomPaint(
-                        painter: GamePainter(
-                          repaint: _progress,
-                          pointers: _pointers,
-                          targetA: _targetA,
-                          targetB: _targetB,
-                          progress: _progress.value,
-                          isPlaying: _phase.value == StickyGamePhase.playing,
-                          primaryColor: cs.primary,
-                          secondaryColor: cs.secondary,
-                          tertiaryColor: cs.tertiary,
-                        ),
-                        child: const SizedBox.expand(),
+  Widget _buildGlowProgressBar(ColorScheme cs) {
+    return ValueListenableBuilder<double>(
+      valueListenable: _progress,
+      builder: (context, v, _) => ValueListenableBuilder<bool>(
+        valueListenable: _isGracePeriod,
+        builder: (context, isGrace, _) {
+          final color = isGrace ? Colors.amber : cs.primary;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.5),
+                    blurRadius: 12,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Stack(
+                  children: [
+                    // Background
+                    Container(
+                      decoration: BoxDecoration(
+                        color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
                       ),
                     ),
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: FilledButton.tonal(
-                            onPressed: () {
-                              if (_phase.value == StickyGamePhase.playing) {
-                                _stop(success: false);
-                              } else {
-                                Navigator.of(context).maybePop();
-                              }
-                            },
-                            child: Text(_phase.value == StickyGamePhase.playing ? '그만하기' : '나가기'),
+                    // Progress with gradient
+                    FractionallySizedBox(
+                      widthFactor: v,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: isGrace
+                                ? [Colors.amber, Colors.orange]
+                                : [cs.primary, cs.secondary],
                           ),
                         ),
-                        // Milestone popup
-                        ValueListenableBuilder<String?>(
-                          valueListenable: _milestoneText,
-                          builder: (context, text, _) {
-                            if (text == null) return const SizedBox.shrink();
-                            return Positioned.fill(
-                              child: Center(
-                                child: TweenAnimationBuilder<double>(
-                                  tween: Tween(begin: 0.0, end: 1.0),
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.elasticOut,
-                                  builder: (context, value, child) {
-                                    return Transform.scale(
-                                      scale: value,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: cs.primaryContainer,
-                                      borderRadius: BorderRadius.circular(16),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: cs.primary.withOpacity(0.3),
-                                          blurRadius: 20,
-                                          spreadRadius: 2,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      text,
-                                      style: titleMedium(cs).copyWith(
-                                        color: cs.onPrimaryContainer,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        // Success animation (character merge)
-                        ValueListenableBuilder<bool>(
-                          valueListenable: _showSuccessAnimation,
-                          builder: (context, show, _) {
-                            if (!show) return const SizedBox.shrink();
-                            return Positioned.fill(
-                              child: TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.0, end: 1.0),
-                                duration: const Duration(milliseconds: 800),
-                                curve: Curves.elasticOut,
-                                builder: (context, value, child) {
-                                  return Center(
-                                    child: Transform.scale(
-                                      scale: 0.5 + (value * 0.5),
-                                      child: Opacity(
-                                        opacity: value,
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              '🐻❤️🐰',
-                                              style: TextStyle(fontSize: 60 + (value * 20)),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 20,
-                                                vertical: 8,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                gradient: LinearGradient(
-                                                  colors: [cs.primary, cs.secondary],
-                                                ),
-                                                borderRadius: BorderRadius.circular(20),
-                                              ),
-                                              child: Text(
-                                                '완벽한 호흡!',
-                                                style: titleSmall(cs).copyWith(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    );
-                  },
+                      )
+                          .animate(
+                            target: v > 0.8 ? 1 : 0,
+                            onPlay: (c) => c.repeat(reverse: true),
+                          )
+                          .shimmer(
+                            duration: 800.ms,
+                            color: Colors.white.withValues(alpha: 0.3),
+                          ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const SizedBox(height: 12),
-            ValueListenableBuilder<StickyGamePhase>(
-              valueListenable: _phase,
-              builder: (context, ph, _) {
-                final line = _resultLine();
-                if (ph == StickyGamePhase.playing || ph == StickyGamePhase.idle) {
-                  return Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    child: Text(
-                      ph == StickyGamePhase.idle
-                          ? '두 손가락을 캐릭터에 올리면 시작!'
-                          : '${_durationSec.toInt()}초 버티면 성공. 손 떼면 실패.',
-                      style: titleSmall(cs),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
+          );
+        },
+      ),
+    );
+  }
 
-                final success = ph == StickyGamePhase.success;
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: RepaintBoundary(
-                    key: _resultShareKey,
-                    child: Column(
-                      children: [
-                        Text(
-                          success ? '성공!' : '실패!',
-                          style: titleBig(cs),
-                        ),
-                        const SizedBox(height: 6),
-                        // New record badge
-                        if (success && _isNewRecord)
-                          Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Colors.amber, Colors.orange],
-                              ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('🏆', style: TextStyle(fontSize: 16)),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '신기록!',
-                                  style: bodySmall(cs).copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        // Record display
-                        if (success && _bestTime != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              '기록: ${_durationSec.toInt()}초 | 최고: ${_bestTime!.toInt()}초',
-                              style: bodySmall(cs).copyWith(
-                                color: cs.onSurfaceVariant,
-                              ),
-                            ),
-                          ),
-                        if (!success && _failureReason != null)
-                          Text(
-                            _failureReason!,
-                            style: bodySmall(cs).copyWith(color: Colors.amber),
-                            textAlign: TextAlign.center,
-                          ),
-                        if (!success && _failureReason != null)
-                          const SizedBox(height: 4),
-                        if (line.isNotEmpty)
-                          Text(line, style: bodyBig(cs), textAlign: TextAlign.center),
-                        const SizedBox(height: 12),
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text('썸썸', style: bodySmall(cs)),
-                              const SizedBox(width: 8),
-                              Text(_storeText, style: bodySmall(cs)),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: FilledButton(
-                                onPressed: _reset,
-                                child: const Text('다시하기'),
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: FilledButton.tonal(
-                                onPressed: _shareResult,
-                                child: const Text('공유하기'),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).maybePop(),
-                          child: Text('나가기', style: bodySmall(cs)),
+  Widget _buildGameArea(ColorScheme cs) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Stack(
+          children: [
+            // Game Canvas with Touch Handler
+            Listener(
+              onPointerDown: (e) {
+                _graceTimer?.cancel();
+                _graceTimer = null;
+                _isGracePeriod.value = false;
+                _pointers[e.pointer] = e.localPosition;
+                if (_phase.value == StickyGamePhase.idle && _pointers.length >= 2) {
+                  _start();
+                }
+                setState(() {});
+              },
+              onPointerMove: (e) {
+                _pointers[e.pointer] = e.localPosition;
+              },
+              onPointerUp: (e) => _handlePointerUp(e),
+              onPointerCancel: (e) => _handlePointerUp(e),
+              child: CustomPaint(
+                painter: GamePainter(
+                  repaint: _progress,
+                  pointers: _pointers,
+                  targetA: _targetA,
+                  targetB: _targetB,
+                  progress: _progress.value,
+                  isPlaying: _phase.value == StickyGamePhase.playing,
+                  primaryColor: cs.primary,
+                  secondaryColor: cs.secondary,
+                  tertiaryColor: cs.tertiary,
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+            // Exit/Stop Button
+            Positioned(
+              top: 12,
+              right: 12,
+              child: _buildGlassActionButton(cs),
+            ),
+            // Milestone Popup
+            _buildMilestonePopup(cs),
+            // Success Animation
+            _buildSuccessAnimation(cs),
+            // Confetti
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: false,
+                colors: [cs.primary, cs.secondary, cs.tertiary, Colors.amber, Colors.white],
+                emissionFrequency: 0.05,
+                numberOfParticles: 30,
+                gravity: 0.2,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _handlePointerUp(PointerEvent e) {
+    final liftedPos = _pointers[e.pointer];
+    _pointers.remove(e.pointer);
+    if (_phase.value == StickyGamePhase.playing) {
+      String liftReason = '손가락이 떨어졌어요';
+      if (liftedPos != null) {
+        final screenWidth = MediaQuery.of(context).size.width;
+        liftReason = liftedPos.dx < screenWidth / 2
+            ? '왼쪽 손가락이 떨어졌어요'
+            : '오른쪽 손가락이 떨어졌어요';
+      }
+      _graceTimer?.cancel();
+      _isGracePeriod.value = true;
+      _graceTimer = Timer(_graceDuration, () {
+        if (_pointers.length < 2 && _phase.value == StickyGamePhase.playing) {
+          _stop(success: false, reason: liftReason);
+        }
+      });
+    }
+    setState(() {});
+  }
+
+  Widget _buildGlassActionButton(ColorScheme cs) {
+    return GestureDetector(
+      onTap: () {
+        if (_phase.value == StickyGamePhase.playing) {
+          _stop(success: false);
+        } else {
+          Navigator.of(context).maybePop();
+        }
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: cs.surface.withValues(alpha: 0.6),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+            ),
+            child: Text(
+              _phase.value == StickyGamePhase.playing ? '그만하기' : '나가기',
+              style: bodySmall(cs),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMilestonePopup(ColorScheme cs) {
+    return ValueListenableBuilder<String?>(
+      valueListenable: _milestoneText,
+      builder: (context, text, _) {
+        if (text == null) return const SizedBox.shrink();
+        return Positioned.fill(
+          child: Center(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) {
+                return Transform.scale(scale: value, child: child);
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          cs.primaryContainer.withValues(alpha: 0.9),
+                          cs.secondaryContainer.withValues(alpha: 0.9),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: cs.primary.withValues(alpha: 0.4),
+                          blurRadius: 30,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
+                    child: Text(
+                      text,
+                      style: titleMedium(cs).copyWith(
+                        color: cs.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-          ],
-        ),
-          ),
-          // Confetti celebration overlay
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-              colors: [
-                cs.primary,
-                cs.secondary,
-                cs.tertiary,
-                Colors.amber,
-                Colors.white,
-              ],
-              emissionFrequency: 0.05,
-              numberOfParticles: 30,
-              gravity: 0.2,
+                ),
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSuccessAnimation(ColorScheme cs) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _showSuccessAnimation,
+      builder: (context, show, _) {
+        if (!show) return const SizedBox.shrink();
+        return Positioned.fill(
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.0, end: 1.0),
+            duration: const Duration(milliseconds: 800),
+            curve: Curves.elasticOut,
+            builder: (context, value, _) {
+              return Center(
+                child: Transform.scale(
+                  scale: 0.5 + (value * 0.5),
+                  child: Opacity(
+                    opacity: value,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '🐻❤️🐰',
+                          style: TextStyle(fontSize: 60 + (value * 20)),
+                        )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .scale(
+                              begin: const Offset(1.0, 1.0),
+                              end: const Offset(1.1, 1.1),
+                              duration: 500.ms,
+                            ),
+                        const SizedBox(height: 12),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(colors: [cs.primary, cs.secondary]),
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: cs.primary.withValues(alpha: 0.5),
+                                    blurRadius: 20,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '완벽한 호흡!',
+                                style: titleSmall(cs).copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                            .animate()
+                            .shimmer(duration: 1500.ms, color: Colors.white.withValues(alpha: 0.3)),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildBottomSection(ColorScheme cs) {
+    return ValueListenableBuilder<StickyGamePhase>(
+      valueListenable: _phase,
+      builder: (context, ph, _) {
+        final line = _resultLine();
+        if (ph == StickyGamePhase.playing || ph == StickyGamePhase.idle) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHighest.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+              ),
+              child: Text(
+                ph == StickyGamePhase.idle
+                    ? '두 손가락을 캐릭터에 올리면 시작!'
+                    : '${_durationSec.toInt()}초 버티면 성공. 손 떼면 실패.',
+                style: bodyText(cs),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideY(begin: 0.1);
+        }
+
+        final success = ph == StickyGamePhase.success;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: RepaintBoundary(
+            key: _resultShareKey,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: cs.surface.withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: cs.outline.withValues(alpha: 0.2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (success ? cs.primary : cs.error).withValues(alpha: 0.2),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        success ? '성공!' : '실패!',
+                        style: titleBig(cs).copyWith(
+                          foreground: Paint()
+                            ..shader = LinearGradient(
+                              colors: success
+                                  ? [cs.primary, cs.secondary]
+                                  : [cs.error, Colors.orange],
+                            ).createShader(const Rect.fromLTWH(0, 0, 100, 50)),
+                        ),
+                      )
+                          .animate()
+                          .fadeIn(duration: 300.ms)
+                          .scale(begin: const Offset(0.8, 0.8)),
+                      const SizedBox(height: 8),
+                      // New record badge
+                      if (success && _isNewRecord)
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [Colors.amber, Colors.orange]),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.amber.withValues(alpha: 0.4),
+                                blurRadius: 12,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text('🏆', style: TextStyle(fontSize: 18)),
+                              const SizedBox(width: 6),
+                              Text(
+                                '신기록!',
+                                style: bodySmall(cs).copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                            .animate()
+                            .fadeIn(delay: 200.ms)
+                            .shimmer(duration: 1500.ms, color: Colors.white.withValues(alpha: 0.5)),
+                      // Record display
+                      if (success && _bestTime != null)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            '기록: ${_durationSec.toInt()}초 | 최고: ${_bestTime!.toInt()}초',
+                            style: bodySmall(cs).copyWith(color: cs.onSurfaceVariant),
+                          ),
+                        ),
+                      if (!success && _failureReason != null)
+                        Text(
+                          _failureReason!,
+                          style: bodySmall(cs).copyWith(color: Colors.amber),
+                          textAlign: TextAlign.center,
+                        ),
+                      if (line.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(line, style: bodyBig(cs), textAlign: TextAlign.center),
+                      ],
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('썸썸', style: bodySmall(cs).copyWith(color: cs.onSurfaceVariant)),
+                          const SizedBox(width: 8),
+                          Text(_storeText, style: bodySmall(cs).copyWith(color: cs.onSurfaceVariant)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GlassButton(
+                              text: '다시하기',
+                              icon: Icons.replay_rounded,
+                              glowColor: cs.primary,
+                              onTap: _reset,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: GlassButton(
+                              text: '공유하기',
+                              icon: Icons.share_rounded,
+                              glowColor: cs.secondary,
+                              onTap: _shareResult,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )
+            .animate()
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.2);
+      },
     );
   }
 }
@@ -695,117 +827,95 @@ class GamePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
 
-    // 1. Draw Connection Line between Pointers (Red Thread of Fate)
+    // Connection Line with enhanced glow
     if (pointers.length >= 2) {
       final p1 = pointers.values.first;
       final p2 = pointers.values.last;
 
-      // Glow Effect
-      paint.color = primaryColor.withOpacity(0.3);
-      paint.strokeWidth = 10;
-      paint.strokeCap = StrokeCap.round;
-      canvas.drawLine(p1, p2, paint);
+      // Outer glow
+      for (var i = 3; i > 0; i--) {
+        paint.color = primaryColor.withValues(alpha: 0.1 * i);
+        paint.strokeWidth = 4 + (i * 6);
+        paint.strokeCap = StrokeCap.round;
+        paint.maskFilter = MaskFilter.blur(BlurStyle.normal, i * 3.0);
+        canvas.drawLine(p1, p2, paint);
+      }
+      paint.maskFilter = null;
 
-      // Core Line
+      // Core line
       paint.color = primaryColor;
       paint.strokeWidth = 3;
       canvas.drawLine(p1, p2, paint);
 
-      // Distance Text
       final dist = (p1 - p2).distance;
       if (dist < 100) {
-        _drawText(
-          canvas,
-          '어머! 닿겠어!',
-          (p1 + p2) / 2 + const Offset(0, -40),
-          tertiaryColor,
-          14,
-          true,
-        );
+        _drawText(canvas, '어머! 닿겠어!', (p1 + p2) / 2 + const Offset(0, -40), tertiaryColor, 14, true);
       }
     }
 
-    // 2. Draw Targets (Bear & Rabbit)
-    _drawCharacter(canvas, targetA, '🐻', secondaryColor);
-    _drawCharacter(canvas, targetB, '🐰', primaryColor);
+    // Enhanced Characters
+    _drawCharacter(canvas, targetA, '🐻', secondaryColor, progress);
+    _drawCharacter(canvas, targetB, '🐰', primaryColor, progress);
 
-    // 3. Draw User Touches (Visual Feedback)
+    // Touch points with pulse effect
     pointers.forEach((id, pos) {
-      paint.color = Colors.white.withOpacity(0.5);
-      canvas.drawCircle(pos, 30, paint);
+      // Outer pulse
+      final pulseRadius = 30 + (sin(progress * 10) * 5);
+      paint.color = Colors.white.withValues(alpha: 0.2);
+      canvas.drawCircle(pos, pulseRadius, paint);
+
+      // Mid ring
+      paint.color = Colors.white.withValues(alpha: 0.4);
+      canvas.drawCircle(pos, 20, paint);
+
+      // Core
       paint.color = Colors.white;
-      canvas.drawCircle(pos, 10, paint);
+      canvas.drawCircle(pos, 8, paint);
     });
   }
 
-  void _drawCharacter(
-    Canvas canvas,
-    Offset pos,
-    String emoji,
-    Color glowColor,
-  ) {
+  void _drawCharacter(Canvas canvas, Offset pos, String emoji, Color glowColor, double progress) {
     final paint = Paint();
 
-    // Glow
-    paint.color = glowColor.withOpacity(0.4);
-    paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
-    canvas.drawCircle(pos, 40, paint);
+    // Animated outer glow
+    final glowSize = 50 + (sin(progress * 8) * 8);
+    paint.color = glowColor.withValues(alpha: 0.3);
+    paint.maskFilter = MaskFilter.blur(BlurStyle.normal, 25);
+    canvas.drawCircle(pos, glowSize, paint);
+
+    // Inner glow
+    paint.color = glowColor.withValues(alpha: 0.5);
+    paint.maskFilter = MaskFilter.blur(BlurStyle.normal, 12);
+    canvas.drawCircle(pos, 35, paint);
     paint.maskFilter = null;
 
     // Ring
     paint.color = glowColor;
     paint.style = PaintingStyle.stroke;
     paint.strokeWidth = 3;
-    canvas.drawCircle(pos, 35, paint);
+    canvas.drawCircle(pos, 38, paint);
 
     // Emoji
-    final textSpan = TextSpan(
-      text: emoji,
-      style: const TextStyle(fontSize: 40),
-    );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
+    final textSpan = TextSpan(text: emoji, style: const TextStyle(fontSize: 44));
+    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout();
-    textPainter.paint(
-      canvas,
-      pos - Offset(textPainter.width / 2, textPainter.height / 2),
-    );
+    textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
   }
 
-  void _drawText(
-    Canvas canvas,
-    String text,
-    Offset pos,
-    Color color,
-    double fontSize,
-    bool bold,
-  ) {
+  void _drawText(Canvas canvas, String text, Offset pos, Color color, double fontSize, bool bold) {
     final textSpan = TextSpan(
       text: text,
       style: TextStyle(
         color: color,
         fontSize: fontSize,
         fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-        fontFamily: 'Pretendard',
       ),
     );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textDirection: TextDirection.ltr,
-    );
+    final textPainter = TextPainter(text: textSpan, textDirection: TextDirection.ltr);
     textPainter.layout();
-    textPainter.paint(
-      canvas,
-      pos - Offset(textPainter.width / 2, textPainter.height / 2),
-    );
+    textPainter.paint(canvas, pos - Offset(textPainter.width / 2, textPainter.height / 2));
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-// -----------------------------------------------------------------------------
-// 6. UTILS & COMPONENTS
-// -----------------------------------------------------------------------------

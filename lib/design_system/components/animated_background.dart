@@ -27,12 +27,12 @@ class AnimatedGradientBackground extends StatelessWidget {
           [
             cs.surface,
             cs.surface,
-            cs.primaryContainer.withOpacity(0.3),
+            cs.primaryContainer.withValues(alpha: 0.3),
           ],
       secondaryColors: secondaryColors ??
           [
             cs.surface,
-            cs.secondaryContainer.withOpacity(0.3),
+            cs.secondaryContainer.withValues(alpha: 0.3),
             cs.surface,
           ],
       duration: const Duration(seconds: 4),
@@ -103,9 +103,9 @@ class _FloatingOrbState extends State<FloatingOrb>
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  widget.color.withOpacity(0.4),
-                  widget.color.withOpacity(0.1),
-                  widget.color.withOpacity(0.0),
+                  widget.color.withValues(alpha: 0.4),
+                  widget.color.withValues(alpha: 0.1),
+                  widget.color.withValues(alpha: 0.0),
                 ],
               ),
             ),

@@ -72,10 +72,10 @@ class _GlowCardState extends State<GlowCard>
       margin: const EdgeInsets.all(3),
       padding: widget.padding,
       decoration: BoxDecoration(
-        color: cs.surface.withOpacity(0.9),
+        color: cs.surface.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(widget.borderRadius - 2),
         border: Border.all(
-          color: Colors.white.withOpacity(0.1),
+          color: Colors.white.withValues(alpha: 0.1),
           width: 1,
         ),
       ),
@@ -119,7 +119,7 @@ class BorderBeamPainter extends CustomPainter {
 
     // Draw the glow
     for (var i = 0; i < 3; i++) {
-      paint.color = color.withOpacity(0.3 - (i * 0.1));
+      paint.color = color.withValues(alpha: 0.3 - (i * 0.1));
       paint.strokeWidth = 2 + (i * 2);
       paint.maskFilter = MaskFilter.blur(BlurStyle.normal, 3.0 + (i * 2));
 
@@ -307,7 +307,7 @@ class SparklePainter extends CustomPainter {
       final opacity = math.sin(phase * math.pi);
 
       if (opacity > 0) {
-        paint.color = color.withOpacity(opacity * 0.8);
+        paint.color = color.withValues(alpha: opacity * 0.8);
         canvas.drawCircle(
           Offset(sparkle.x * size.width, sparkle.y * size.height),
           sparkle.size * opacity,

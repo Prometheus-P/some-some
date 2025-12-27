@@ -69,17 +69,17 @@ class _GlassButtonState extends State<GlassButton>
                   center: Alignment.center,
                   startAngle: _borderController.value * 6.28,
                   colors: [
-                    glowColor.withOpacity(0.8),
-                    glowColor.withOpacity(0.2),
-                    cs.secondary.withOpacity(0.8),
-                    glowColor.withOpacity(0.2),
-                    glowColor.withOpacity(0.8),
+                    glowColor.withValues(alpha: 0.8),
+                    glowColor.withValues(alpha: 0.2),
+                    cs.secondary.withValues(alpha: 0.8),
+                    glowColor.withValues(alpha: 0.2),
+                    glowColor.withValues(alpha: 0.8),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: glowColor.withOpacity(0.3),
+                    color: glowColor.withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 1,
                   ),
@@ -91,10 +91,10 @@ class _GlassButtonState extends State<GlassButton>
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                 decoration: BoxDecoration(
                   // Glass effect
-                  color: cs.surface.withOpacity(0.8),
+                  color: cs.surface.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
@@ -166,7 +166,7 @@ class ShimmerButton extends StatelessWidget {
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
           duration: const Duration(milliseconds: 1500),
-          color: cs.primary.withOpacity(0.3),
+          color: cs.primary.withValues(alpha: 0.3),
         );
   }
 }
